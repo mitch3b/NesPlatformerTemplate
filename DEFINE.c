@@ -36,19 +36,29 @@ unsigned char levelNum;
 
 // temp vars
 unsigned char index;
+unsigned char temp1;
+unsigned char temp2;
+unsigned char temp3;
+unsigned char temp4;
+unsigned int tempInt;
+unsigned int tempInt2;
 
 // got rid of Vert_scroll, now always 0
 unsigned char Nametable;
+
 
 // Music
 unsigned char song;
 
 //Main character
 #define MAIN_CHAR_FIRST_SPRITE 0x00;
+#define CHARACTER_WIDTH 0x0F  // Technically 0x10 but use this for doing collision so save the -1 in each calculation
+#define CHARACTER_HEIGHT 0x0F // Same as above
+unsigned char newX;
+unsigned char newY;
+void applyX(void);
+void applyY(void);
 
-// OAM equals ram addresses 200-2ff
-#pragma bss-name(push, "OAM")
-unsigned char SPRITES[256]; //64 sprites * 4 bytes
 #define MAIN_CHAR_SPRITE_INDEX	0x00
 
 // Prototypes
@@ -57,6 +67,14 @@ void allOn(void);
 void resetScroll (void);
 void initSprites(void);
 void updateSprites(void);
+void putCharInBackgroundVars(void);
+char isBackgroundCollision(void);
+void loadCollisionFromNametables(void);
+
+char collisionX;
+char collisionY;
+char collisionWidth;
+char collisionHeight;
 
 void initLevel(void);
 
@@ -68,4 +86,5 @@ void __fastcall__ Play_Fx(unsigned char song);
 void __fastcall__ memcpy (void* dest, const void* src, int count);
 void Wait_Vblank(void);
 void __fastcall__ UnRLE(const unsigned char *data);
+void UnCollision();
 void Get_Input(void);

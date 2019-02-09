@@ -1,6 +1,20 @@
 #include "DEFINE.c"
 #include "LevelData.c"
 
+#pragma bss-name (push, "OAM")
+unsigned char SPRITES[256];
+#pragma bss-name (pop)
+
+#pragma bss-name (push, "ZEROPAGE")
+unsigned char currentValue;
+
+#pragma bss-name (pop)
+#pragma bss-name (push, "BSS")
+
+// 32 x 30
+// TODO should use a bit per block instead of byte, but this is a lot easier at the moment
+unsigned char collision[960];
+
 void main (void) {
   allOff(); // turn off screen
 	song = 0;
@@ -23,7 +37,14 @@ void main (void) {
 
     if (gameState == 1) {
 			allOff();
+
 			loadLevel();
+      for(index = 0 ; index < 255 ; index++) {
+        collision[index] = index;
+      }
+      //UnCollision();
+      loadCollisionFromNametables();
+
       initSprites();
 			Wait_Vblank();
 			allOn();
@@ -31,6 +52,11 @@ void main (void) {
       gameState = 2;
     }
     else if (gameState == 2) {
+      //In game
+      newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3];
+      newY = SPRITES[MAIN_CHAR_SPRITE_INDEX];
+      applyX();
+      applyY();
       updateSprites();
     }
 
@@ -40,31 +66,95 @@ void main (void) {
   }
 }
 
+//Would be better to do in asm (like in UnCollision) but haven't figured out a good way yet
+void loadCollisionFromNametables(void)
+{
+  PPU_ADDRESS = 0x20; // address of nametable #0
+  PPU_ADDRESS = 0x00;
+
+  //First read is always invalid
+  tempInt = *((unsigned char*)0x2007);
+
+  for(tempInt = 0 ; tempInt < 960 ; tempInt++) {
+    collision[tempInt] = (*((unsigned char*)0x2007) == 0x00) ? 0x00 : 0x01;
+  }
+}
+
+void applyX(void) {
+  if((joypad1 & LEFT) != 0) {
+    SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] = 0x00; //attribute
+      //SPRITES[MAIN_CHAR_SPRITE_INDEX + 1] = MAIN_CHAR_FIRST_SPRITE; //sprite
+    newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] - 2;
+  }
+  else if((joypad1 & RIGHT) != 0) {
+    SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] = 0x40; //attribute
+      //SPRITES[MAIN_CHAR_SPRITE_INDEX + 1] = MAIN_CHAR_FIRST_SPRITE; //sprite
+    newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] + 2;
+  }
+
+  //Test X collision
+  putCharInBackgroundVars();
+  if(isBackgroundCollision() == 0) {
+    SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] = newX;
+  }
+}
+
+void applyY(void) {
+  if((joypad1 & UP) != 0) {
+    newY = SPRITES[MAIN_CHAR_SPRITE_INDEX] - 1;
+  }
+  else if((joypad1 & DOWN) != 0) {
+    newY = SPRITES[MAIN_CHAR_SPRITE_INDEX] + 1;
+  }
+
+  //Test Y collision
+  putCharInBackgroundVars();
+  if(isBackgroundCollision() == 0) {
+    SPRITES[MAIN_CHAR_SPRITE_INDEX] = newY;
+  }
+}
+
+void putCharInBackgroundVars(void) {
+  collisionX = newX;
+  collisionY = newY;
+  collisionWidth = CHARACTER_WIDTH;
+  collisionHeight = CHARACTER_HEIGHT;
+}
+
+char isBackgroundCollision(void) {
+  temp1 = newX >> 3;
+  temp2 = newY >> 3;
+  tempInt = 32*temp2 + temp1;
+
+  if(collision[tempInt] == 0) {
+    if((newX % 8 != 0) && collision[tempInt + 1] != 0) {
+      return 1;
+    }
+
+    if((newY % 8 != 0) && collision[tempInt + 32] != 0) {
+      return 1;
+    }
+
+    if((newX % 8 != 0) && (newY % 8 != 0) && collision[tempInt + 33] != 0) {
+      return 1;
+    }
+  }
+  else {
+    return 1;
+  }
+
+  return 0;
+}
+
 void initSprites(void) {
-  SPRITES[MAIN_CHAR_SPRITE_INDEX]     = 0xA0; //Y
+  SPRITES[MAIN_CHAR_SPRITE_INDEX]     = 0x08; //Y
   SPRITES[MAIN_CHAR_SPRITE_INDEX + 1] = MAIN_CHAR_FIRST_SPRITE; //sprite
   SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] = 0x00; //attribute
   SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] = 0x30; //X
 }
 
 void updateSprites(void) {
-  if((joypad1 & UP) != 0) {
-      SPRITES[MAIN_CHAR_SPRITE_INDEX] -= 1;
-  }
-  else if((joypad1 & DOWN) != 0) {
-      SPRITES[MAIN_CHAR_SPRITE_INDEX] += 1;
-  }
 
-  //SPRITES[MAIN_CHAR_SPRITE_INDEX + 1] = MAIN_CHAR_FIRST_SPRITE; //sprite
-
-  if((joypad1 & LEFT) != 0) {
-      SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] -= 2; //X
-      SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] = 0x00; //attribute
-  }
-  else if((joypad1 & RIGHT) != 0) {
-      SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] += 2; //X
-      SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] = 0x40; //attribute
-  }
 }
 
 /**

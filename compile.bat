@@ -1,6 +1,6 @@
 @echo off
 
-set name="KeyPlatformer"
+set name="NesPlatformerTemplate"
 
 set path=%path%;..\bin\
 

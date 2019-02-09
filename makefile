@@ -5,7 +5,7 @@ NAME = NesPlatformerTemplate
 
 
 $(NAME).nes: $(NAME).o reset.o asm4c.o nes.cfg
-	$(LD65) -C nes.cfg -o $(NAME).nes reset.o $(NAME).o asm4c.o nes.lib
+	$(LD65) -C nes.cfg -o $(NAME).nes --dbgfile vars.txt reset.o $(NAME).o asm4c.o nes.lib
 # if linux uncomment the next line
 	rm *.o
 	rm $(NAME).s
@@ -23,7 +23,7 @@ $(NAME).o: $(NAME).s
 	$(CA65) $(NAME).s
 
 $(NAME).s: $(NAME).c
-	$(CC65) -Oi $(NAME).c --add-source
+	$(CC65) -Oi $(NAME).c --add-source -g
 
 clean:
 # if linux uncomment the next line

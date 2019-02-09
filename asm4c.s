@@ -2,7 +2,8 @@
 ;note, the unrle code was provided with NES screen tool. Written by Shiru 2010.
 
 .importzp _joypad1, _joypad1old, _joypad1test, _joypad2, _joypad2old, _joypad2test
-.export _Get_Input, _Wait_Vblank, _UnRLE
+.import _collision
+.export _Get_Input, _Wait_Vblank, _UnRLE, _UnCollision
 
 .segment "ZEROPAGE"
 RLE_LOW:	.res 1
@@ -100,7 +101,7 @@ _UnRLE:
 @11:
 	cmp <RLE_TAG
 	beq @2
-	sta $2007
+	sta $2007        ; Only one
 	sta <RLE_BYTE
 	bne @1
 @2:
@@ -113,9 +114,30 @@ _UnRLE:
 	tax
 	lda <RLE_BYTE
 @3:
-	sta $2007
+	sta $2007       ; whole bunch
 	dex
 	bne @3
 	beq @1
 @4:
 	rts
+
+; This doesn't work
+_UnCollision:
+ lda #$20
+ sta $2006
+ lda #$00
+ sta $2006
+ lda $2007 ; First one is garbage so throw it away
+ ldy #33   ; 32 + 1 so we'll exit if it equal 0 after decrement
+@1:
+ ldx #31   ; 30 + 1
+@2:
+ lda $2007
+ sta _collision, x
+ dex
+ bne @2
+ ;dey
+ ;tay
+ ;cmp #$0
+ ;bne @1
+ rts

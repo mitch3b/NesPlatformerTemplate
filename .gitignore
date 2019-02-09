@@ -3,6 +3,7 @@
 *.nes.deb
 *.o
 *.s
+vars.txt
 !asm4c.s
 !reset.s
 !release/*.nes
