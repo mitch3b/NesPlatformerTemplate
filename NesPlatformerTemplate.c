@@ -1,12 +1,21 @@
 #include "DEFINE.c"
 #include "LevelData.c"
 
+// Physics
+#define GRAVITY 1
+#define JUMP_VELOCITY -8
+#define VELOCITY_FACTOR 4 //No decimals so only use 1/VELOCITY_FACTOR'th of the velocity
+#define MAX_JUMP_COUNT 10 //Number of frames you can hold jump and keep traveling up
+#define MAX_VELOCITY_X 1
+#define MAX_VELOCITY_WITH_B_X 2
+
 #pragma bss-name (push, "OAM")
 unsigned char SPRITES[256];
 #pragma bss-name (pop)
 
 #pragma bss-name (push, "ZEROPAGE")
-unsigned char currentValue;
+signed char yVelocity;
+signed char jumpCount;
 
 #pragma bss-name (pop)
 #pragma bss-name (push, "BSS")
@@ -81,15 +90,16 @@ void loadCollisionFromNametables(void)
 }
 
 void applyX(void) {
+  temp1 = ((joypad1 & B_BUTTON) != 0) ? MAX_VELOCITY_WITH_B_X : MAX_VELOCITY_X;
   if((joypad1 & LEFT) != 0) {
     SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] = 0x00; //attribute
       //SPRITES[MAIN_CHAR_SPRITE_INDEX + 1] = MAIN_CHAR_FIRST_SPRITE; //sprite
-    newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] - 2;
+    newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] - temp1;
   }
   else if((joypad1 & RIGHT) != 0) {
     SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] = 0x40; //attribute
       //SPRITES[MAIN_CHAR_SPRITE_INDEX + 1] = MAIN_CHAR_FIRST_SPRITE; //sprite
-    newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] + 2;
+    newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] + temp1;
   }
 
   //Test X collision
@@ -97,20 +107,48 @@ void applyX(void) {
   if(isBackgroundCollision() == 0) {
     SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] = newX;
   }
+  else {
+    newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3];
+  }
 }
 
 void applyY(void) {
-  if((joypad1 & UP) != 0) {
-    newY = SPRITES[MAIN_CHAR_SPRITE_INDEX] - 1;
+
+  // TODO just checking against 0 allows a double jump at the peak
+  if(yVelocity >=0 && yVelocity < VELOCITY_FACTOR && (joypad1 & A_BUTTON) != 0 && (joypad1old & A_BUTTON) == 0) {
+    yVelocity = JUMP_VELOCITY;
+    jumpCount = MAX_JUMP_COUNT;
   }
-  else if((joypad1 & DOWN) != 0) {
-    newY = SPRITES[MAIN_CHAR_SPRITE_INDEX] + 1;
+  else if((joypad1 & A_BUTTON) != 0 && jumpCount != 0) {
+    --jumpCount;
+    //yVelocity should still be JUMP_VELOCITY
   }
+  else {
+    yVelocity = yVelocity + GRAVITY;
+  }
+
+  tempSigned = yVelocity/VELOCITY_FACTOR;
+  newY = SPRITES[MAIN_CHAR_SPRITE_INDEX] + tempSigned;
 
   //Test Y collision
   putCharInBackgroundVars();
   if(isBackgroundCollision() == 0) {
     SPRITES[MAIN_CHAR_SPRITE_INDEX] = newY;
+  }
+  else {
+    //Round up to the block above this
+    newY = newY % 8;
+    if(yVelocity > 0) {
+      //Falling so round up a block
+      newY = newY - 8;
+    }
+    else {
+      //Moving up so round down a block
+      newY = newY + 8;
+    }
+
+
+    yVelocity = 0;
   }
 }
 
