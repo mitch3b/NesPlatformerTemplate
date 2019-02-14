@@ -60,7 +60,8 @@ unsigned char newY;
 void applyX(void);
 void applyY(void);
 
-#define MAIN_CHAR_SPRITE_INDEX	0x00
+#define MAIN_CHAR_SPRITE_INDEX	0x0
+#define POWERUP_SPRITE_INDEX 0x04
 
 // Prototypes
 void allOff(void);

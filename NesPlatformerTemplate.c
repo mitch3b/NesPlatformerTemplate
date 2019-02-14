@@ -16,6 +16,11 @@ unsigned char SPRITES[256];
 #pragma bss-name (push, "ZEROPAGE")
 signed char yVelocity;
 signed char jumpCount;
+signed char isFalling;
+
+//POWERUPS
+unsigned char powerUp;
+unsigned char powerUpState;
 
 #pragma bss-name (pop)
 #pragma bss-name (push, "BSS")
@@ -29,6 +34,8 @@ void main (void) {
 	song = 0;
   gameState = 1;
   levelNum = 0;
+  powerUp = 1;
+  powerUpState = 0;
 
 	loadPalette();
 	resetScroll();
@@ -115,7 +122,7 @@ void applyX(void) {
 void applyY(void) {
 
   // TODO just checking against 0 allows a double jump at the peak
-  if(yVelocity >=0 && yVelocity < VELOCITY_FACTOR && (joypad1 & A_BUTTON) != 0 && (joypad1old & A_BUTTON) == 0) {
+  if(yVelocity >=0 && yVelocity < VELOCITY_FACTOR && isFalling == 0 && (joypad1 & A_BUTTON) != 0 && (joypad1old & A_BUTTON) == 0) {
     yVelocity = JUMP_VELOCITY;
     jumpCount = MAX_JUMP_COUNT;
   }
@@ -133,11 +140,16 @@ void applyY(void) {
   //Test Y collision
   putCharInBackgroundVars();
   if(isBackgroundCollision() == 0) {
-    SPRITES[MAIN_CHAR_SPRITE_INDEX] = newY;
+    //Because of subpixels, want to make sure we're actually moving
+    if(SPRITES[MAIN_CHAR_SPRITE_INDEX] != newY) {
+      SPRITES[MAIN_CHAR_SPRITE_INDEX] = newY;
+      isFalling = 1;
+    }
   }
   else {
+    isFalling = 0;
     //Round up to the block above this
-    newY = newY % 8;
+    newY = newY - (newY % 8);
     if(yVelocity > 0) {
       //Falling so round up a block
       newY = newY - 8;
@@ -146,7 +158,6 @@ void applyY(void) {
       //Moving up so round down a block
       newY = newY + 8;
     }
-
 
     yVelocity = 0;
   }
@@ -192,7 +203,18 @@ void initSprites(void) {
 }
 
 void updateSprites(void) {
+  //TODO not sure this is the best place...
+  if(powerUp == 1) {
+    temp1 = SPRITES[MAIN_CHAR_SPRITE_INDEX];
+    SPRITES[POWERUP_SPRITE_INDEX] = temp1;
 
+    //if(SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] == 0x00) {
+      //Facing left
+      SPRITES[POWERUP_SPRITE_INDEX + 1] = 1;
+      SPRITES[POWERUP_SPRITE_INDEX + 2] = SPRITES[MAIN_CHAR_SPRITE_INDEX + 2];
+      SPRITES[POWERUP_SPRITE_INDEX + 3] = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] + 7;
+    //}
+  }
 }
 
 /**
