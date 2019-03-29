@@ -53,12 +53,12 @@ unsigned char song;
 
 //Main character
 #define MAIN_CHAR_FIRST_SPRITE 0x00;
+#define MAIN_CHAR_DEAD_FIRST_SPRITE 0x04;
 #define CHARACTER_WIDTH 0x0F  // Technically 0x10 but use this for doing collision so save the -1 in each calculation
 #define CHARACTER_HEIGHT 0x0F // Same as above
 unsigned char newX;
 unsigned char newY;
-void applyX(void);
-void applyY(void);
+void move(void);
 
 #define MAIN_CHAR_SPRITE_INDEX	0x0
 #define POWERUP_SPRITE_INDEX 0x04
@@ -70,7 +70,7 @@ void resetScroll (void);
 void initSprites(void);
 void updateSprites(void);
 void putCharInBackgroundVars(void);
-char isBackgroundCollision(void);
+void checkBackgroundCollision(void);
 void loadCollisionFromNametables(void);
 
 char collisionX;

@@ -14,28 +14,42 @@ unsigned char SPRITES[256];
 #pragma bss-name (pop)
 
 #pragma bss-name (push, "ZEROPAGE")
-signed char yVelocity;
-signed char jumpCount;
-signed char isFalling;
+unsigned char timer;
+unsigned char checkCollision;
+unsigned char isWalking;
+unsigned char walkingDirection;
+unsigned char mainCharState;
 
-//POWERUPS
-unsigned char powerUp;
-unsigned char powerUpState;
+#define GAME_STATE_LOADING 0
+#define GAME_STATE_PLAYING_LEVEL 1
+
+#define DEAD_FOR_THIS_MANY_FRAMES 30
+
+#define MAIN_CHAR_ALIVE 0
+#define MAIN_CHAR_WILL_DIE 1 //To finish movement animation before dying
+#define MAIN_CHAR_DYING 2
+#define MAIN_CHAR_DEAD 3
+
+#define WALKING_SPEED 1     // Num steps per frame
+#define WALKING_NUM_STEPS 8 //
+
+unsigned char startX;
+unsigned char startY;
 
 #pragma bss-name (pop)
 #pragma bss-name (push, "BSS")
 
 // 32 x 30
 // TODO should use a bit per block instead of byte, but this is a lot easier at the moment
-unsigned char collision[960];
+unsigned char collision[240];
 
 void main (void) {
   allOff(); // turn off screen
 	song = 0;
-  gameState = 1;
+  gameState = GAME_STATE_LOADING;
   levelNum = 0;
-  powerUp = 1;
-  powerUpState = 0;
+  startX = 1;
+  startY = 0;
 
 	loadPalette();
 	resetScroll();
@@ -51,29 +65,49 @@ void main (void) {
 		//every_frame();	// moved this to the nmi code in reset.s for greater stability
 		Get_Input();
 
-    if (gameState == 1) {
+    if (gameState == GAME_STATE_LOADING) {
 			allOff();
 
 			loadLevel();
-      for(index = 0 ; index < 255 ; index++) {
-        collision[index] = index;
-      }
+
       //UnCollision();
       loadCollisionFromNametables();
 
-      initSprites();
+      mainCharState = MAIN_CHAR_ALIVE;
+
+      newX = startX;
+      newY = startY;
+
+      updateSprites();
 			Wait_Vblank();
 			allOn();
 			resetScroll();
-      gameState = 2;
+      gameState = GAME_STATE_PLAYING_LEVEL;
     }
-    else if (gameState == 2) {
-      //In game
-      newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3];
-      newY = SPRITES[MAIN_CHAR_SPRITE_INDEX];
-      applyX();
-      applyY();
-      updateSprites();
+    else if (gameState == GAME_STATE_PLAYING_LEVEL) {
+      if(mainCharState == MAIN_CHAR_ALIVE || mainCharState == MAIN_CHAR_WILL_DIE) {
+        //In game
+        newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3];
+        newY = SPRITES[MAIN_CHAR_SPRITE_INDEX];
+        move();
+        checkBackgroundCollision();
+
+        updateSprites();
+      }
+      else if(mainCharState == MAIN_CHAR_DYING) {
+        //Animation
+        timer--;
+
+        if(timer == 0) {
+          mainCharState = MAIN_CHAR_DEAD;
+        }
+      }
+      else if (mainCharState == MAIN_CHAR_DEAD) {
+        newX = startX;
+        newY = startY;
+        updateSprites(); //Might be a cleaner way to reset the level
+        mainCharState = MAIN_CHAR_ALIVE;
+      }
     }
 
     Music_Update();
@@ -81,6 +115,12 @@ void main (void) {
     NMI_flag = 0;
   }
 }
+
+#define BLOCK_ID_SOLID 0x01
+#define BLOCK_ID_OPEN  0x02
+#define BLOCK_ID_DEATH 0x04
+#define BLOCK_ID_START 0x06
+#define BLOCK_ID_END   0x08
 
 //Would be better to do in asm (like in UnCollision) but haven't figured out a good way yet
 void loadCollisionFromNametables(void)
@@ -91,75 +131,74 @@ void loadCollisionFromNametables(void)
   //First read is always invalid
   tempInt = *((unsigned char*)0x2007);
 
-  for(tempInt = 0 ; tempInt < 960 ; tempInt++) {
-    collision[tempInt] = (*((unsigned char*)0x2007) == 0x00) ? 0x00 : 0x01;
+  for(tempInt = 0 ; tempInt < 240 ; tempInt++) {
+    //Top left of 2x2 square
+    temp1 = *((unsigned char*)0x2007);
+
+    //Only pull top left corner block
+    collision[tempInt] = temp1;
+
+    if(temp1 == BLOCK_ID_START) {
+      startX = 16*(tempInt % 16);
+      startY = 16*(tempInt/16);
+    }
+
+    //Burn the right side of 2x2
+    temp1 = *((unsigned char*)0x2007);
+
+    if((tempInt % 16) == 15) {
+      //skip every other row
+      for(temp2 = 0; temp2 < 32 ; temp2++) {
+        temp1 = *((unsigned char*)0x2007);
+      }
+    }
   }
 }
 
-void applyX(void) {
-  temp1 = ((joypad1 & B_BUTTON) != 0) ? MAX_VELOCITY_WITH_B_X : MAX_VELOCITY_X;
-  if((joypad1 & LEFT) != 0) {
-    SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] = 0x00; //attribute
-      //SPRITES[MAIN_CHAR_SPRITE_INDEX + 1] = MAIN_CHAR_FIRST_SPRITE; //sprite
-    newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] - temp1;
-  }
-  else if((joypad1 & RIGHT) != 0) {
-    SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] = 0x40; //attribute
-      //SPRITES[MAIN_CHAR_SPRITE_INDEX + 1] = MAIN_CHAR_FIRST_SPRITE; //sprite
-    newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] + temp1;
-  }
-
-  //Test X collision
-  putCharInBackgroundVars();
-  if(isBackgroundCollision() == 0) {
-    SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] = newX;
-  }
-  else {
-    newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3];
-  }
-}
-
-void applyY(void) {
-
-  // TODO just checking against 0 allows a double jump at the peak
-  if(yVelocity >=0 && yVelocity < VELOCITY_FACTOR && isFalling == 0 && (joypad1 & A_BUTTON) != 0 && (joypad1old & A_BUTTON) == 0) {
-    yVelocity = JUMP_VELOCITY;
-    jumpCount = MAX_JUMP_COUNT;
-  }
-  else if((joypad1 & A_BUTTON) != 0 && jumpCount != 0) {
-    --jumpCount;
-    //yVelocity should still be JUMP_VELOCITY
-  }
-  else {
-    yVelocity = yVelocity + GRAVITY;
-  }
-
-  tempSigned = yVelocity/VELOCITY_FACTOR;
-  newY = SPRITES[MAIN_CHAR_SPRITE_INDEX] + tempSigned;
-
-  //Test Y collision
-  putCharInBackgroundVars();
-  if(isBackgroundCollision() == 0) {
-    //Because of subpixels, want to make sure we're actually moving
-    if(SPRITES[MAIN_CHAR_SPRITE_INDEX] != newY) {
-      SPRITES[MAIN_CHAR_SPRITE_INDEX] = newY;
-      isFalling = 1;
+void move(void) {
+  if(isWalking == 0) {
+    if((joypad1 & LEFT) != 0) {
+      isWalking = WALKING_NUM_STEPS;
+      walkingDirection = LEFT;
+      checkCollision = 1;
+    }
+    else if((joypad1 & RIGHT) != 0) {
+      isWalking = WALKING_NUM_STEPS;
+      walkingDirection = RIGHT;
+      checkCollision = 1;
+    }
+    if((joypad1 & UP) != 0) {
+      isWalking = WALKING_NUM_STEPS;
+      walkingDirection = UP;
+      checkCollision = 1;
+    }
+    else if((joypad1 & DOWN) != 0) {
+      isWalking = WALKING_NUM_STEPS;
+      walkingDirection = DOWN;
+      checkCollision = 1;
     }
   }
-  else {
-    isFalling = 0;
-    //Round up to the block above this
-    newY = newY - (newY % 8);
-    if(yVelocity > 0) {
-      //Falling so round up a block
-      newY = newY - 8;
+
+  if(isWalking > 0) {
+    if(walkingDirection == LEFT) {
+      newX -= WALKING_SPEED;
     }
-    else {
-      //Moving up so round down a block
-      newY = newY + 8;
+    else if(walkingDirection == RIGHT) {
+      newX += WALKING_SPEED;
+    }
+    if(walkingDirection == UP) {
+      newY -= WALKING_SPEED;
+    }
+    else if(walkingDirection == DOWN) {
+      newY += WALKING_SPEED;
     }
 
-    yVelocity = 0;
+    isWalking -= 1;
+
+    if(isWalking == 0 && mainCharState == MAIN_CHAR_WILL_DIE) {
+        mainCharState = MAIN_CHAR_DYING;
+        timer = DEAD_FOR_THIS_MANY_FRAMES;
+    }
   }
 }
 
@@ -170,51 +209,113 @@ void putCharInBackgroundVars(void) {
   collisionHeight = CHARACTER_HEIGHT;
 }
 
-char isBackgroundCollision(void) {
-  temp1 = newX >> 3;
-  temp2 = newY >> 3;
-  tempInt = 32*temp2 + temp1;
+void checkBackgroundCollision(void) {
+  //Only checking background collisions at the start and end of movement
+  if(checkCollision > 0) {
 
-  if(collision[tempInt] == 0) {
-    if((newX % 8 != 0) && collision[tempInt + 1] != 0) {
-      return 1;
+    if(walkingDirection == LEFT) {
+      //temp3 points top left
+      temp1 = newX/16;
+      temp2 = newY/16;
+      temp3 = temp2*16 + temp1;
+
+      //temp4 points bottom left
+      temp1 = newX/16;
+      temp2 = (newY + 15)/16;
+      temp4 = temp2*16 + temp1;
+    }
+    else if(walkingDirection == RIGHT) {
+      //temp3 points top right
+      temp1 = (newX + 15)/16;
+      temp2 = newY/16;
+      temp3 = temp2*16 + temp1;
+
+      //temp4 points bottom right
+      temp1 = (newX + 15)/16;
+      temp2 = (newY + 15)/16;
+      temp4 = temp2*16 + temp1;
+    }
+    if(walkingDirection == UP) {
+      //temp3 points top left
+      temp1 = newX/16;
+      temp2 = newY/16;
+      temp3 = temp2*16 + temp1;
+
+      //temp4 points top right
+      temp1 = (newX + 15)/16;
+      temp2 = newY/16;
+      temp4 = temp2*16 + temp1;
+    }
+    else if(walkingDirection == DOWN) {
+      //temp3 points bottom left
+      temp1 = newX/16;
+      temp2 = (newY + 15)/16;
+      temp3 = temp2*16 + temp1;
+
+      //temp4 points bottom right
+      temp1 = (newX + 15)/16;
+      temp2 = (newY + 15)/16;
+      temp4 = temp2*16 + temp1;
     }
 
-    if((newY % 8 != 0) && collision[tempInt + 32] != 0) {
-      return 1;
+    //TODO next, check for solid, then death? but probably need to check two corners for each direction
+    temp1 = BLOCK_ID_OPEN;
+
+    if(collision[temp3] == BLOCK_ID_SOLID ||
+       collision[temp4] == BLOCK_ID_SOLID) {
+         temp1 = BLOCK_ID_SOLID;
+    }
+    else if(collision[temp3] == BLOCK_ID_DEATH ||
+            collision[temp4] == BLOCK_ID_DEATH) {
+         temp1 = BLOCK_ID_DEATH;
     }
 
-    if((newX % 8 != 0) && (newY % 8 != 0) && collision[tempInt + 33] != 0) {
-      return 1;
+    if(temp1 == BLOCK_ID_SOLID) {
+      //Go back and don't move
+      newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3];
+      newY = SPRITES[MAIN_CHAR_SPRITE_INDEX];
+      isWalking = 0;
     }
+    else if(temp1 == BLOCK_ID_DEATH) {
+      mainCharState = MAIN_CHAR_WILL_DIE;
+    }
+    else if(temp1 == BLOCK_ID_END) {
+
+    }
+
+    checkCollision = 0;
   }
-  else {
-    return 1;
-  }
-
-  return 0;
-}
-
-void initSprites(void) {
-  SPRITES[MAIN_CHAR_SPRITE_INDEX]     = 0x08; //Y
-  SPRITES[MAIN_CHAR_SPRITE_INDEX + 1] = MAIN_CHAR_FIRST_SPRITE; //sprite
-  SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] = 0x00; //attribute
-  SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] = 0x30; //X
 }
 
 void updateSprites(void) {
-  //TODO not sure this is the best place...
-  if(powerUp == 1) {
-    temp1 = SPRITES[MAIN_CHAR_SPRITE_INDEX];
-    SPRITES[POWERUP_SPRITE_INDEX] = temp1;
+  temp1 = MAIN_CHAR_FIRST_SPRITE
 
-    //if(SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] == 0x00) {
-      //Facing left
-      SPRITES[POWERUP_SPRITE_INDEX + 1] = 1;
-      SPRITES[POWERUP_SPRITE_INDEX + 2] = SPRITES[MAIN_CHAR_SPRITE_INDEX + 2];
-      SPRITES[POWERUP_SPRITE_INDEX + 3] = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] + 7;
-    //}
+  if(mainCharState != MAIN_CHAR_ALIVE) {
+    temp1 = MAIN_CHAR_DEAD_FIRST_SPRITE;
   }
+
+  SPRITES[MAIN_CHAR_SPRITE_INDEX]     = newY; //Y
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 1] = temp1; //sprite
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 2] = 0x00; //attribute
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 3] = newX; //X
+
+  temp1 += 1;
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 4] = newY; //Y
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 5] = temp1; //sprite
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 6] = 0x00; //attribute
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 7] = newX + 8; //X
+
+  temp1 += 1;
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 8] = newY + 8; //Y
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 9] = temp1; //sprite
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 10] = 0x00; //attribute
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 11] = newX; //X
+
+  temp1 += 1;
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 12] = newY + 8; //Y
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 13] = temp1; //sprite
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 14] = 0x00; //attribute
+  SPRITES[MAIN_CHAR_SPRITE_INDEX + 15] = newX + 8; //X
 }
 
 /**
