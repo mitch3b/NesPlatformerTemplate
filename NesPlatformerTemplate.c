@@ -15,6 +15,7 @@ unsigned char SPRITES[256];
 
 #pragma bss-name (push, "ZEROPAGE")
 unsigned char timer;
+unsigned char isHidden;
 unsigned char checkCollision;
 unsigned char isWalking;
 unsigned char walkingDirection;
@@ -22,6 +23,7 @@ unsigned char mainCharState;
 
 #define GAME_STATE_LOADING 0
 #define GAME_STATE_PLAYING_LEVEL 1
+#define GAME_STATE_LEVEL_COMPLETE 2
 
 #define DEAD_FOR_THIS_MANY_FRAMES 30
 
@@ -50,8 +52,9 @@ void main (void) {
   levelNum = 0;
   startX = 1;
   startY = 0;
+  isHidden = 0;
 
-	loadPalette();
+  loadPalette();
 	resetScroll();
 
 	Reset_Music(); // note, this is famitone init, and I added the music data address. see famitone2.s
@@ -70,7 +73,6 @@ void main (void) {
 
 			loadLevel();
 
-      //UnCollision();
       loadCollisionFromNametables();
 
       mainCharState = MAIN_CHAR_ALIVE;
@@ -85,6 +87,27 @@ void main (void) {
       gameState = GAME_STATE_PLAYING_LEVEL;
     }
     else if (gameState == GAME_STATE_PLAYING_LEVEL) {
+      if(isHidden == 0 &&
+         (
+           ((joypad1 & UP) != 0 && (joypad1old & UP) == 0) ||
+           ((joypad1 & DOWN) != 0 && (joypad1old & DOWN) == 0) ||
+           ((joypad1 & RIGHT) != 0 && (joypad1old & RIGHT) == 0) ||
+           ((joypad1 & LEFT) != 0 && (joypad1old & LEFT) == 0)
+         )) {
+          allOff();
+          if(isHidden != 0) {
+            loadPalette();
+            isHidden = 0;
+          }
+          else {
+            loadHiddenPalette();
+            isHidden = 1;
+          }
+
+          Wait_Vblank();
+    			allOn();
+      }
+
       if(mainCharState == MAIN_CHAR_ALIVE || mainCharState == MAIN_CHAR_WILL_DIE) {
         //In game
         newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3];
@@ -107,7 +130,18 @@ void main (void) {
         newY = startY;
         updateSprites(); //Might be a cleaner way to reset the level
         mainCharState = MAIN_CHAR_ALIVE;
+        isHidden = 0;
+        allOff();
+        loadPalette();
+        Wait_Vblank();
+        allOn();
       }
+    }
+    else if (gameState == GAME_STATE_LEVEL_COMPLETE) {
+      levelNum += 1;
+      levelNum = levelNum % 3; //Currently only 3
+      gameState = GAME_STATE_LOADING;
+      isHidden = 0;
     }
 
     Music_Update();
@@ -267,7 +301,11 @@ void checkBackgroundCollision(void) {
     }
     else if(collision[temp3] == BLOCK_ID_DEATH ||
             collision[temp4] == BLOCK_ID_DEATH) {
-         temp1 = BLOCK_ID_DEATH;
+        temp1 = BLOCK_ID_DEATH;
+    }
+    else if(collision[temp3] == BLOCK_ID_END &&
+            collision[temp4] == BLOCK_ID_END) {
+        temp1 = BLOCK_ID_END;
     }
 
     if(temp1 == BLOCK_ID_SOLID) {
@@ -280,7 +318,7 @@ void checkBackgroundCollision(void) {
       mainCharState = MAIN_CHAR_WILL_DIE;
     }
     else if(temp1 == BLOCK_ID_END) {
-
+      gameState = GAME_STATE_LEVEL_COMPLETE;
     }
 
     checkCollision = 0;
