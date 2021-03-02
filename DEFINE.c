@@ -22,11 +22,11 @@
 #pragma bss-name(push, "ZEROPAGE")
 unsigned char NMI_flag;
 unsigned char Frame_Count;
-unsigned char joypad1;
-unsigned char joypad1old;
+unsigned char joypad1;    //Current controller input
+unsigned char joypad1old; //To keep track of button changes
 unsigned char joypad1test;
-unsigned char joypad2;
-unsigned char joypad2old;
+unsigned char joypad2;    //Current controller input
+unsigned char joypad2old; //To keep track of button changes
 unsigned char joypad2test;
 unsigned char Horiz_scroll;
 unsigned char Frame_Count;
@@ -46,7 +46,6 @@ unsigned int tempInt2;
 
 // got rid of Vert_scroll, now always 0
 unsigned char Nametable;
-
 
 // Music
 unsigned char song;
@@ -72,6 +71,8 @@ void updateSprites(void);
 void putCharInBackgroundVars(void);
 void checkBackgroundCollision(void);
 void loadCollisionFromNametables(void);
+void hiddenModeOff(void);
+void hiddenModeOn(void);
 
 char collisionX;
 char collisionY;

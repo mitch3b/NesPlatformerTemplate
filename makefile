@@ -1,6 +1,6 @@
-CC65 = ../../cc65/bin/cc65
-CA65 = ../../cc65/bin/ca65
-LD65 = ../../cc65/bin/ld65
+CC65 = cc65
+CA65 = ca65
+LD65 = ld65
 NAME = NesPlatformerTemplate
 
 

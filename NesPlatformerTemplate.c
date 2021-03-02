@@ -22,8 +22,9 @@ unsigned char walkingDirection;
 unsigned char mainCharState;
 
 #define GAME_STATE_LOADING 0
-#define GAME_STATE_PLAYING_LEVEL 1
-#define GAME_STATE_LEVEL_COMPLETE 2
+#define GAME_STATE_LOADED_WAITING 1
+#define GAME_STATE_PLAYING_LEVEL 2
+#define GAME_STATE_LEVEL_COMPLETE 3
 
 #define DEAD_FOR_THIS_MANY_FRAMES 30
 
@@ -75,6 +76,7 @@ void main (void) {
 
       loadCollisionFromNametables();
 
+      hiddenModeOff();
       mainCharState = MAIN_CHAR_ALIVE;
 
       newX = startX;
@@ -84,9 +86,9 @@ void main (void) {
 			Wait_Vblank();
 			allOn();
 			resetScroll();
-      gameState = GAME_STATE_PLAYING_LEVEL;
+      gameState = GAME_STATE_LOADED_WAITING;
     }
-    else if (gameState == GAME_STATE_PLAYING_LEVEL) {
+    else if (gameState == GAME_STATE_LOADED_WAITING) {
       if(isHidden == 0 &&
          (
            ((joypad1 & UP) != 0 && (joypad1old & UP) == 0) ||
@@ -94,24 +96,24 @@ void main (void) {
            ((joypad1 & RIGHT) != 0 && (joypad1old & RIGHT) == 0) ||
            ((joypad1 & LEFT) != 0 && (joypad1old & LEFT) == 0)
          )) {
-          allOff();
-          if(isHidden != 0) {
-            loadPalette();
-            isHidden = 0;
-          }
-          else {
-            loadHiddenPalette();
-            isHidden = 1;
-          }
 
-          Wait_Vblank();
-    			allOn();
+          hiddenModeOn();
+          gameState = GAME_STATE_PLAYING_LEVEL;
       }
-
+   }
+   else if (gameState == GAME_STATE_PLAYING_LEVEL) {
       if(mainCharState == MAIN_CHAR_ALIVE || mainCharState == MAIN_CHAR_WILL_DIE) {
         //In game
         newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3];
         newY = SPRITES[MAIN_CHAR_SPRITE_INDEX];
+
+        if((joypad1 & A_BUTTON) != 0 && (joypad1old & A_BUTTON) == 0) {
+          hiddenModeOff();
+        }
+        else if((joypad1old & A_BUTTON) != 0 && (joypad1 & A_BUTTON) == 0) {
+          hiddenModeOn();
+        }
+
         move();
         checkBackgroundCollision();
 
@@ -128,13 +130,14 @@ void main (void) {
       else if (mainCharState == MAIN_CHAR_DEAD) {
         newX = startX;
         newY = startY;
-        updateSprites(); //Might be a cleaner way to reset the level
         mainCharState = MAIN_CHAR_ALIVE;
+        updateSprites(); //Might be a cleaner way to reset the level
         isHidden = 0;
         allOff();
         loadPalette();
         Wait_Vblank();
         allOn();
+        gameState = GAME_STATE_LOADED_WAITING;
       }
     }
     else if (gameState == GAME_STATE_LEVEL_COMPLETE) {
@@ -148,6 +151,22 @@ void main (void) {
 
     NMI_flag = 0;
   }
+}
+
+void hiddenModeOff() {
+  //allOff();
+  isHidden = 0;
+  loadPalette();
+  //Wait_Vblank();
+  //allOn();
+}
+
+void hiddenModeOn() {
+  //allOff();
+  isHidden = 1;
+  loadHiddenPalette();
+  //Wait_Vblank();
+  //allOn();
 }
 
 #define BLOCK_ID_SOLID 0x01
