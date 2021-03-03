@@ -3,6 +3,8 @@
 *.nes.deb
 *.o
 *.s
+*.cdl
+*.nl
 vars.txt
 !asm4c.s
 !reset.s
