@@ -20,6 +20,7 @@ unsigned char checkCollision;
 unsigned char isWalking;
 unsigned char walkingDirection;
 unsigned char mainCharState;
+unsigned char numCandles;
 
 #define GAME_STATE_LOADING 0
 #define GAME_STATE_LOADED_WAITING 1
