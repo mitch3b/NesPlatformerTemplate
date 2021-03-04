@@ -55,6 +55,7 @@ void main (void) {
   startX = 1;
   startY = 0;
   isHidden = 0;
+  candleCount = 0;
 
   loadPalette();
 	resetScroll();
@@ -69,11 +70,28 @@ void main (void) {
 
 		//every_frame();	// moved this to the nmi code in reset.s for greater stability
 		Get_Input();
+    candleCount++;
 
     if (gameState == GAME_STATE_LOADING) {
 			allOff();
-
 			loadLevel();
+
+      candleCount = 2;
+/*
+      candles[0].x = 0x30;
+      candles[0].y = 0x30;
+      candles[1].x = 0x30;
+      candles[1].y = 0x40;
+*/
+
+      temp1 = CANDLE_SPRITE_INDEX;
+
+      for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
+          SPRITES[temp1++] = 0x30;//candles[temp2].y; //Y
+          SPRITES[temp1++] = 0x10; //sprite
+          SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+          SPRITES[temp1++] = 0x30 + temp1;//candles[temp2].x; //X
+      }
 
       loadCollisionFromNametables();
 
@@ -374,6 +392,28 @@ void updateSprites(void) {
   SPRITES[MAIN_CHAR_SPRITE_INDEX + 13] = temp1; //sprite
   SPRITES[MAIN_CHAR_SPRITE_INDEX + 14] = 0x00; //attribute
   SPRITES[MAIN_CHAR_SPRITE_INDEX + 15] = newX + 8; //X
+
+  temp1 = CANDLE_SPRITE_INDEX + 1;
+
+  //TODO not sure why can't use candleCount here
+  for(temp2 = 0 ; temp2 < 2 ; temp2++) {
+    if((candleCount % 10) < 5) {
+      SPRITES[temp1] = 0x10; //sprite
+    }
+    else {
+      SPRITES[temp1] = 0x11; //sprite
+    }
+
+
+    if((candleCount % 20) < 10) {
+      SPRITES[temp1 + 1] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    }
+    else {
+      SPRITES[temp1 + 1] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    }
+
+    temp1 += 4;
+  }
 }
 
 /**

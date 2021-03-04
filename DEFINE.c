@@ -33,6 +33,16 @@ unsigned char Frame_Count;
 
 unsigned char gameState;
 unsigned char levelNum;
+/*
+typedef struct {
+  unsigned char x;
+  unsigned char y;
+} posX_t;
+
+#define MAX_CANDLES 5
+posX_t candles[MAX_CANDLES];
+*/
+unsigned char candleCount;
 
 // temp vars
 unsigned char index;
@@ -60,7 +70,7 @@ unsigned char newY;
 void move(void);
 
 #define MAIN_CHAR_SPRITE_INDEX	0x0
-#define POWERUP_SPRITE_INDEX 0x04
+#define CANDLE_SPRITE_INDEX 0x10
 
 // Prototypes
 void allOff(void);
