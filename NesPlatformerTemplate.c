@@ -21,6 +21,8 @@ unsigned char isWalking;
 unsigned char walkingDirection;
 unsigned char mainCharState;
 unsigned char numCandles;
+unsigned char palletteToUpdate;
+unsigned char palletteNum;
 
 #define GAME_STATE_LOADING 0
 #define GAME_STATE_LOADED_WAITING 1
@@ -55,6 +57,8 @@ void main (void) {
   startX = 1;
   startY = 0;
   isHidden = 0;
+  palletteToUpdate = 0;
+  palletteNum = 0;
 
   loadPalette();
 	resetScroll();
@@ -109,6 +113,7 @@ void main (void) {
         newY = SPRITES[MAIN_CHAR_SPRITE_INDEX];
 
         if((joypad1 & A_BUTTON) != 0 && (joypad1old & A_BUTTON) == 0) {
+          changePallette();
           hiddenModeOff();
         }
         else if((joypad1old & A_BUTTON) != 0 && (joypad1 & A_BUTTON) == 0) {
@@ -168,6 +173,26 @@ void hiddenModeOn() {
   loadHiddenPalette();
   //Wait_Vblank();
   //allOn();
+}
+
+void changePallette() {
+  temp1 = newX % 16;
+  temp2 = newY % 16;
+  temp3 = temp2*8;
+  temp3 = temp3 + temp1*2;
+  temp3 = 0xc0;
+
+  allOff();
+  PPU_ADDRESS = 0x23;
+  PPU_ADDRESS = 0xc0;
+  PPU_ADDRESS = 0x00;
+
+  //palletteToUpdate = 0;
+  palletteNum = palletteNum + 1;
+  palletteNum = palletteNum % 64;
+  PPU_DATA = 0x30;
+  Wait_Vblank();
+  allOn();
 }
 
 #define BLOCK_ID_SOLID 0x01
@@ -253,6 +278,10 @@ void move(void) {
         mainCharState = MAIN_CHAR_DYING;
         timer = DEAD_FOR_THIS_MANY_FRAMES;
     }
+
+    //if(true) {
+    temp1 = newX/4;
+    //}
   }
 }
 

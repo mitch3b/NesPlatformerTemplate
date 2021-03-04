@@ -73,6 +73,7 @@ void checkBackgroundCollision(void);
 void loadCollisionFromNametables(void);
 void hiddenModeOff(void);
 void hiddenModeOn(void);
+void changePallette(void);
 
 char collisionX;
 char collisionY;
