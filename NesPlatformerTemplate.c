@@ -24,7 +24,12 @@ unsigned char numCandles;
 unsigned char palletteToUpdate;
 unsigned char palletteNum;
 unsigned char prevPalletteToUpdate;
-unsigned char prevPalletteNum; // Don't think i need this
+unsigned char palletteToUpdate2;
+unsigned char palletteNum2;
+unsigned char prevPalletteToUpdate2;
+unsigned char palletteToUpdate3;
+unsigned char palletteNum3;
+unsigned char prevPalletteToUpdate3;
 
 #define GAME_STATE_LOADING 0
 #define GAME_STATE_LOADED_WAITING 1
@@ -62,7 +67,12 @@ void main (void) {
   palletteToUpdate = 0;
   palletteNum = 0;
   prevPalletteToUpdate = 0;
-  prevPalletteNum = 0;
+  palletteToUpdate2 = 0;
+  palletteNum2 = 0;
+  prevPalletteToUpdate2 = 0;
+  palletteToUpdate3 = 0;
+  palletteNum3 = 0;
+  prevPalletteToUpdate3 = 0;
 
   loadPalette();
 	resetScroll();
@@ -132,7 +142,8 @@ void main (void) {
         //TODO probably much faster to just do left/right shifts
         //TODO store whole palette in mem, only change the bytes we want and change old ones back
         prevPalletteToUpdate = palletteToUpdate;
-        prevPalletteNum = palletteNum;
+        prevPalletteToUpdate2 = palletteToUpdate2;
+        prevPalletteToUpdate3 = palletteToUpdate3;
 
         temp1 = newX + 8;
         temp2 = newY + 8;
@@ -154,10 +165,49 @@ void main (void) {
         temp4 = temp2 % NUM_PIXELS_X_IN_PALLETTE_BYTE;
         temp4 = temp4/16;
         temp4 = temp4*2;
+
+        if(temp3 == 0) {
+          //Left side
+          palletteToUpdate2 = palletteToUpdate - 1;
+          palletteNum2 = 1;
+          palletteNum3 = 0;
+        }
+        else {
+          //Right side
+          palletteToUpdate2 = palletteToUpdate + 1;
+          palletteNum2 = 0;
+          palletteNum3 = 1;
+        }
+
+        if(temp4 == 0) {
+          //top side
+          palletteToUpdate3 = palletteToUpdate - 8;
+          palletteNum3 = palletteNum3 + 2;
+        }
+        else {
+          //bottom side
+          palletteToUpdate3 = palletteToUpdate + 8;
+          palletteNum2 = palletteNum2 + 2;
+        }
+
+        temp2 = palletteNum2*2;
+        palletteNum2 = 0x03 << temp2;
+        temp2 = palletteNum3*2;
+        palletteNum3 = 0x03 << temp2;
+
         temp3 = temp3 + temp4;
         temp3 = 2*temp3;
-        palletteNum = 0x03;
-        palletteNum = palletteNum << temp3;
+        palletteNum = 0xC0;
+        palletteNum = palletteNum >> temp3;
+        /*
+        0 -> 11111100
+        1 -> 11110011
+        2 -> 11001111
+        3 -> 00111111
+         */
+        palletteNum = ~palletteNum;
+
+
       }
       else if(mainCharState == MAIN_CHAR_DYING) {
         //Animation
@@ -171,6 +221,8 @@ void main (void) {
         newX = startX;
         newY = startY;
         prevPalletteToUpdate = palletteToUpdate;
+        prevPalletteToUpdate2 = palletteToUpdate2;
+        prevPalletteToUpdate3 = palletteToUpdate3;
         palletteNum = 0;
         mainCharState = MAIN_CHAR_ALIVE;
         updateSprites(); //Might be a cleaner way to reset the level
@@ -201,15 +253,31 @@ void every_frame(void) {
 
   allOff();
 
+  //Clear prev pallette changes
   PPU_ADDRESS = 0x23;
   PPU_ADDRESS = 0xc0 + prevPalletteToUpdate;
-
+  PPU_DATA = 0;
+  PPU_ADDRESS = 0x23;
+  PPU_ADDRESS = 0xc0 + prevPalletteToUpdate2;
+  PPU_DATA = 0;
+  PPU_ADDRESS = 0x23;
+  PPU_ADDRESS = 0xc0 + prevPalletteToUpdate3;
   PPU_DATA = 0;
 
   PPU_ADDRESS = 0x23;
   PPU_ADDRESS = 0xc0 + palletteToUpdate;
 
   PPU_DATA = palletteNum;
+
+  PPU_ADDRESS = 0x23;
+  PPU_ADDRESS = 0xc0 + palletteToUpdate2;
+
+  PPU_DATA = palletteNum2;
+
+  PPU_ADDRESS = 0x23;
+  PPU_ADDRESS = 0xc0 + palletteToUpdate3;
+
+  PPU_DATA = palletteNum3;
   allOn();
 
   SCROLL = 0;
