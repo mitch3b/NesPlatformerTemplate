@@ -23,6 +23,8 @@ unsigned char mainCharState;
 unsigned char numCandles;
 unsigned char palletteToUpdate;
 unsigned char palletteNum;
+unsigned char prevPalletteToUpdate;
+unsigned char prevPalletteNum; // Don't think i need this
 
 #define GAME_STATE_LOADING 0
 #define GAME_STATE_LOADED_WAITING 1
@@ -59,6 +61,8 @@ void main (void) {
   isHidden = 0;
   palletteToUpdate = 0;
   palletteNum = 0;
+  prevPalletteToUpdate = 0;
+  prevPalletteNum = 0;
 
   loadPalette();
 	resetScroll();
@@ -70,8 +74,8 @@ void main (void) {
 	allOn(); // turn on screen
 	while (1){ // infinite loop
     while (NMI_flag == 0); // wait till NMI
+    every_frame();
 
-		//every_frame();	// moved this to the nmi code in reset.s for greater stability
 		Get_Input();
 
     if (gameState == GAME_STATE_LOADING) {
@@ -113,7 +117,7 @@ void main (void) {
         newY = SPRITES[MAIN_CHAR_SPRITE_INDEX];
 
         if((joypad1 & A_BUTTON) != 0 && (joypad1old & A_BUTTON) == 0) {
-          changePallette();
+          //changePallette();
           hiddenModeOff();
         }
         else if((joypad1old & A_BUTTON) != 0 && (joypad1 & A_BUTTON) == 0) {
@@ -124,6 +128,36 @@ void main (void) {
         checkBackgroundCollision();
 
         updateSprites();
+
+        //TODO probably much faster to just do left/right shifts
+        //TODO store whole palette in mem, only change the bytes we want and change old ones back
+        prevPalletteToUpdate = palletteToUpdate;
+        prevPalletteNum = palletteNum;
+
+        temp1 = newX + 8;
+        temp2 = newY + 8;
+
+        if(walkingDirection == LEFT) {
+          temp1 = temp1 - 1;
+        }
+        else if(walkingDirection == UP) {
+          temp2 = temp2 - 1;
+        }
+
+        temp3 = temp1/NUM_PIXELS_X_IN_PALLETTE_BYTE;
+        palletteToUpdate = temp2/NUM_PIXELS_X_IN_PALLETTE_BYTE;
+        palletteToUpdate = palletteToUpdate*NUM_PALLETTES_ACROSS_IN_BYTE;
+        palletteToUpdate = palletteToUpdate + temp3;
+        temp3 = temp1 % NUM_PIXELS_X_IN_PALLETTE_BYTE;
+        temp3 = temp3/16;
+
+        temp4 = temp2 % NUM_PIXELS_X_IN_PALLETTE_BYTE;
+        temp4 = temp4/16;
+        temp4 = temp4*2;
+        temp3 = temp3 + temp4;
+        temp3 = 2*temp3;
+        palletteNum = 0x03;
+        palletteNum = palletteNum << temp3;
       }
       else if(mainCharState == MAIN_CHAR_DYING) {
         //Animation
@@ -136,6 +170,8 @@ void main (void) {
       else if (mainCharState == MAIN_CHAR_DEAD) {
         newX = startX;
         newY = startY;
+        prevPalletteToUpdate = palletteToUpdate;
+        palletteNum = 0;
         mainCharState = MAIN_CHAR_ALIVE;
         updateSprites(); //Might be a cleaner way to reset the level
         isHidden = 0;
@@ -159,6 +195,27 @@ void main (void) {
   }
 }
 
+void every_frame(void) {
+  OAM_ADDRESS = 0;
+  OAM_DMA = 2; // push all the sprite data from the ram at 200-2ff to the sprite me
+
+  allOff();
+
+  PPU_ADDRESS = 0x23;
+  PPU_ADDRESS = 0xc0 + prevPalletteToUpdate;
+
+  PPU_DATA = 0;
+
+  PPU_ADDRESS = 0x23;
+  PPU_ADDRESS = 0xc0 + palletteToUpdate;
+
+  PPU_DATA = palletteNum;
+  allOn();
+
+  SCROLL = 0;
+  SCROLL = 0xff;
+}
+
 void hiddenModeOff() {
   //allOff();
   isHidden = 0;
@@ -168,11 +225,8 @@ void hiddenModeOff() {
 }
 
 void hiddenModeOn() {
-  //allOff();
   isHidden = 1;
-  loadHiddenPalette();
-  //Wait_Vblank();
-  //allOn();
+  //loadHiddenPalette();
 }
 
 void changePallette() {
@@ -187,9 +241,6 @@ void changePallette() {
   PPU_ADDRESS = 0xc0;
   PPU_ADDRESS = 0x00;
 
-  //palletteToUpdate = 0;
-  palletteNum = palletteNum + 1;
-  palletteNum = palletteNum % 64;
   PPU_DATA = 0x30;
   Wait_Vblank();
   allOn();
@@ -422,7 +473,7 @@ void allOff (void) {
 }
 
 void allOn (void) {
-	PPU_CTRL = 0x80; // This will turn NMI on, make sure this matches the one in the NMI loop
+	PPU_CTRL = 0x88; // This will turn NMI on, make sure this matches the one in the NMI loop
 	PPU_MASK = 0x1e; // enable all rendering
 }
 

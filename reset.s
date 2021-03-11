@@ -16,7 +16,6 @@ NTSC_MODE: 			.res 1
 ;FT_TEMP: 			.res 3
 TEMP: 				.res 11
 
-
 .segment "HEADER"
   .byte $4e,$45,$53,$1a
 	.byte 01 ;<NES_PRG_BANKS
@@ -128,21 +127,21 @@ nmi:
 
 	inc _NMI_flag
 	inc _Frame_Count
-	lda #0
-	sta $2003
-	lda #2
-	sta $4014 ;push sprite data to OAM from $200-2ff
-	lda #$88 ; This gets set while "All On"
-	clc
-	adc _Nametable
-	sta $2000 ;nmi on
-	lda #$1e
-	sta $2001 ;screen on
-	lda $2002 ;reset the latch
-	lda _Horiz_scroll
-	sta $2005
-	lda #$ff
-	sta $2005
+	;lda #0
+	;sta $2003  ; OAM Address
+	;lda #2     ; push all the sprite data from the ram at 200-2ff to the sprite me
+	;sta $4014  ; push sprite data to OAM from $200-2ff
+	;lda #$88   ; This gets set while "All On"
+	;clc        ; clear carry fly
+	;adc _Nametable
+	;sta $2000 ;nmi on
+	;lda #$1e
+	;sta $2001 ;screen on
+	;lda $2002 ;reset the latch
+	;lda _Horiz_scroll
+	;sta $2005
+	;lda #$ff
+	;sta $2005
 
 	pla
 	tax

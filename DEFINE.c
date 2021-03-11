@@ -17,6 +17,9 @@
 #define B_BUTTON	0x40
 #define A_BUTTON	0x80
 
+#define NUM_PIXELS_X_IN_PALLETTE_BYTE 32
+#define NUM_PALLETTES_ACROSS_IN_BYTE 8 
+
 // Globals
 // our startup code initialized all values to zero
 #pragma bss-name(push, "ZEROPAGE")
@@ -63,6 +66,7 @@ void move(void);
 #define POWERUP_SPRITE_INDEX 0x04
 
 // Prototypes
+void every_frame(void);
 void allOff(void);
 void allOn(void);
 void resetScroll (void);
