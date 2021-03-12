@@ -192,8 +192,10 @@ void main (void) {
 
         temp2 = palletteNum2*2;
         palletteNum2 = 0x03 << temp2;
+        palletteNum2 = palletteNum2 | 0xAA;
         temp2 = palletteNum3*2;
         palletteNum3 = 0x03 << temp2;
+        palletteNum3 = palletteNum3 | 0xAA;
 
         temp3 = temp3 + temp4;
         temp3 = 2*temp3;
@@ -285,16 +287,21 @@ void every_frame(void) {
 }
 
 void hiddenModeOff() {
-  //allOff();
   isHidden = 0;
+  allOff();
   loadPalette();
-  //Wait_Vblank();
-  //allOn();
+  allOn();
+  resetScroll();
+  Wait_Vblank();
 }
 
 void hiddenModeOn() {
   isHidden = 1;
-  //loadHiddenPalette();
+  allOff();
+  loadHiddenPalette();
+  allOn();
+  resetScroll();
+  Wait_Vblank();
 }
 
 void changePallette() {
