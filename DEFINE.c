@@ -18,7 +18,7 @@
 #define A_BUTTON	0x80
 
 #define NUM_PIXELS_X_IN_PALLETTE_BYTE 32
-#define NUM_PALLETTES_ACROSS_IN_BYTE 8 
+#define NUM_PALLETTES_ACROSS_IN_BYTE 8
 
 // Globals
 // our startup code initialized all values to zero
@@ -36,6 +36,7 @@ unsigned char Frame_Count;
 
 unsigned char gameState;
 unsigned char levelNum;
+unsigned char candleCount;
 
 // temp vars
 unsigned char index;
@@ -63,7 +64,7 @@ unsigned char newY;
 void move(void);
 
 #define MAIN_CHAR_SPRITE_INDEX	0x0
-#define POWERUP_SPRITE_INDEX 0x04
+#define CANDLE_SPRITE_INDEX 0x10
 
 // Prototypes
 void every_frame(void);
@@ -73,6 +74,7 @@ void resetScroll (void);
 void initSprites(void);
 void updateSprites(void);
 void putCharInBackgroundVars(void);
+void checkCandleCollision(void);
 void checkBackgroundCollision(void);
 void loadCollisionFromNametables(void);
 void hiddenModeOff(void);

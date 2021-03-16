@@ -64,6 +64,8 @@ void main (void) {
   startX = 1;
   startY = 0;
   isHidden = 0;
+  candleCount = 1;
+
   palletteToUpdate = 0;
   palletteNum = 0;
   prevPalletteToUpdate = 0;
@@ -92,6 +94,14 @@ void main (void) {
 			allOff();
 
 			loadLevel();
+
+      temp1 = CANDLE_SPRITE_INDEX;
+      for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
+          SPRITES[temp1++] = 0x84;//candles[temp2].y; //Y
+          SPRITES[temp1++] = 0x10; //sprite
+          SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+          SPRITES[temp1++] = 0x40 + temp1;//candles[temp2].x; //X
+      }
 
       loadCollisionFromNametables();
 
@@ -137,6 +147,7 @@ void main (void) {
 
         move();
         checkBackgroundCollision();
+        checkCandleCollision();
 
         updateSprites();
 
@@ -231,11 +242,17 @@ void main (void) {
         mainCharState = MAIN_CHAR_ALIVE;
         updateSprites(); //Might be a cleaner way to reset the level
         isHidden = 1;
-        //allOff();
 
-        //loadPalette();
-        //Wait_Vblank();
-        //allOn();
+        // Reload candle (TODO better way to do this)
+        candleCount = 1;
+        temp1 = CANDLE_SPRITE_INDEX;
+        for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
+            SPRITES[temp1++] = 0x84;//candles[temp2].y; //Y
+            SPRITES[temp1++] = 0x10; //sprite
+            SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+            SPRITES[temp1++] = 0x40 + temp1;//candles[temp2].x; //X
+        }
+
         gameState = GAME_STATE_PLAYING_LEVEL;//GAME_STATE_LOADED_WAITING;
       }
     }
@@ -243,7 +260,17 @@ void main (void) {
       levelNum += 1;
       levelNum = levelNum % 3; //Currently only 3
       gameState = GAME_STATE_LOADING;
-      isHidden = 0;
+      //isHidden = 0;
+
+      // Reload candle (TODO better way to do this)
+      candleCount = 1;
+      temp1 = CANDLE_SPRITE_INDEX;
+      for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
+          SPRITES[temp1++] = 0x84;//candles[temp2].y; //Y
+          SPRITES[temp1++] = 0x10; //sprite
+          SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+          SPRITES[temp1++] = 0x40 + temp1;//candles[temp2].x; //X
+      }
     }
 
     Music_Update();
@@ -421,6 +448,19 @@ void putCharInBackgroundVars(void) {
   collisionHeight = CHARACTER_HEIGHT;
 }
 
+void checkCandleCollision(void) {
+ for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
+   if(newY > 0x7A && newY < 0x83 && newX > 0x48 && newX < 0x58) {
+     // Hide candle
+     SPRITES[CANDLE_SPRITE_INDEX] = 0x00;
+     SPRITES[CANDLE_SPRITE_INDEX + 3] = 0x00;
+
+     candleCount--;
+     temp2--;
+   }
+ }
+}
+
 void checkBackgroundCollision(void) {
   //Only checking background collisions at the start and end of movement
   if(checkCollision > 0) {
@@ -495,7 +535,7 @@ void checkBackgroundCollision(void) {
     else if(temp1 == BLOCK_ID_DEATH) {
       mainCharState = MAIN_CHAR_WILL_DIE;
     }
-    else if(temp1 == BLOCK_ID_END) {
+    else if(temp1 == BLOCK_ID_END && candleCount == 0) {
       gameState = GAME_STATE_LEVEL_COMPLETE;
     }
 
@@ -532,6 +572,27 @@ void updateSprites(void) {
   SPRITES[MAIN_CHAR_SPRITE_INDEX + 13] = temp1; //sprite
   SPRITES[MAIN_CHAR_SPRITE_INDEX + 14] = 0x00; //attribute
   SPRITES[MAIN_CHAR_SPRITE_INDEX + 15] = newX + 8; //X
+
+  temp1 = CANDLE_SPRITE_INDEX + 1;
+
+  //TODO not sure why can't use candleCount here
+  for(temp2 = 0 ; temp2 < 2 ; temp2++) {
+    if((Frame_Count % 10) < 5) {
+      SPRITES[temp1] = 0x10; //sprite
+    }
+    else {
+      SPRITES[temp1] = 0x11; //sprite
+    }
+
+    if((Frame_Count % 20) < 10) {
+      SPRITES[temp1 + 1] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    }
+    else {
+      SPRITES[temp1 + 1] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    }
+
+    temp1 += 4;
+  }
 }
 
 /**
