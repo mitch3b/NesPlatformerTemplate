@@ -192,10 +192,10 @@ void main (void) {
 
         temp2 = palletteNum2*2;
         palletteNum2 = 0x03 << temp2;
-        palletteNum2 = palletteNum2 | 0xAA;
+        //palletteNum2 = palletteNum2 | 0xFF;
         temp2 = palletteNum3*2;
         palletteNum3 = 0x03 << temp2;
-        palletteNum3 = palletteNum3 | 0xAA;
+        //palletteNum3 = palletteNum3 | 0xFF;
 
         temp3 = temp3 + temp4;
         temp3 = 2*temp3;
