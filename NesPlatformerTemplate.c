@@ -95,7 +95,8 @@ void main (void) {
 
       loadCollisionFromNametables();
 
-      hiddenModeOff();
+      hiddenModeOn();
+      isWalking = 0;
       mainCharState = MAIN_CHAR_ALIVE;
 
       newX = startX;
@@ -105,7 +106,7 @@ void main (void) {
 			Wait_Vblank();
 			allOn();
 			resetScroll();
-      gameState = GAME_STATE_LOADED_WAITING;
+      gameState = GAME_STATE_PLAYING_LEVEL;//GAME_STATE_LOADED_WAITING;
     }
     else if (gameState == GAME_STATE_LOADED_WAITING) {
       if(isHidden == 0 &&
@@ -226,14 +227,16 @@ void main (void) {
         prevPalletteToUpdate2 = palletteToUpdate2;
         prevPalletteToUpdate3 = palletteToUpdate3;
         palletteNum = 0;
+
         mainCharState = MAIN_CHAR_ALIVE;
         updateSprites(); //Might be a cleaner way to reset the level
-        isHidden = 0;
-        allOff();
-        loadPalette();
-        Wait_Vblank();
-        allOn();
-        gameState = GAME_STATE_LOADED_WAITING;
+        isHidden = 1;
+        //allOff();
+
+        //loadPalette();
+        //Wait_Vblank();
+        //allOn();
+        gameState = GAME_STATE_PLAYING_LEVEL;//GAME_STATE_LOADED_WAITING;
       }
     }
     else if (gameState == GAME_STATE_LEVEL_COMPLETE) {
