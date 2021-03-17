@@ -31,7 +31,6 @@ unsigned char checkCollision;
 unsigned char isWalking;
 unsigned char walkingDirection;
 unsigned char mainCharState;
-unsigned char numCandles;
 unsigned char palletteToUpdate;
 unsigned char palletteNum;
 unsigned char prevPalletteToUpdate;
@@ -104,10 +103,11 @@ void main (void) {
 			allOff();
 
 			loadLevel();
-      drawCandles();
 
       loadCollisionFromNametables();
+      
       candlesLeft = candleCount;
+      drawCandles();
 
       hiddenModeOn();
       isWalking = 0;
@@ -366,7 +366,7 @@ void loadCollisionFromNametables(void)
 
   //First read is always invalid
   tempInt = *((unsigned char*)0x2007);
-  numCandles = 0;
+  candleCount = 0;
 
   for(tempInt = 0 ; tempInt < 240 ; tempInt++) {
     //Top left of 2x2 square
@@ -380,10 +380,10 @@ void loadCollisionFromNametables(void)
       startY = 16*(tempInt/16);
     }
     else if(temp1 == BLOCK_CANDLE) {
-      numCandles++;
-      candles[numCandles].x = 16*(tempInt % 16);
-      candles[numCandles].y = 16*(tempInt/16);
-      candles[numCandles].picked_up = 0;
+      candles[candleCount].x = 16*(tempInt % 16);
+      candles[candleCount].y = 16*(tempInt/16);
+      candles[candleCount].picked_up = 0;
+      candleCount++;
     }
 
     //Burn the right side of 2x2
