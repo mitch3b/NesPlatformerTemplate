@@ -1,6 +1,17 @@
 #include "DEFINE.c"
 #include "LevelData.c"
 
+typedef struct {
+  unsigned char x;
+  unsigned char y;
+  unsigned char picked_up;
+} candle_struct;
+
+#define MAX_CANDLES 4
+candle_struct candles[MAX_CANDLES];
+
+unsigned char candlesLeft;
+
 // Physics
 #define GRAVITY 1
 #define JUMP_VELOCITY -8
@@ -64,7 +75,6 @@ void main (void) {
   startX = 1;
   startY = 0;
   isHidden = 0;
-  candleCount = 1;
 
   palletteToUpdate = 0;
   palletteNum = 0;
@@ -80,7 +90,7 @@ void main (void) {
 	resetScroll();
 
 	Reset_Music(); // note, this is famitone init, and I added the music data address. see famitone2.s
-	Play_Music(song); // song = 0
+	//Play_Music(song); // song = 0
 
 	Wait_Vblank();
 	allOn(); // turn on screen
@@ -94,16 +104,10 @@ void main (void) {
 			allOff();
 
 			loadLevel();
-
-      temp1 = CANDLE_SPRITE_INDEX;
-      for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
-          SPRITES[temp1++] = 0x84;//candles[temp2].y; //Y
-          SPRITES[temp1++] = 0x10; //sprite
-          SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
-          SPRITES[temp1++] = 0x40 + temp1;//candles[temp2].x; //X
-      }
+      drawCandles();
 
       loadCollisionFromNametables();
+      candlesLeft = candleCount;
 
       hiddenModeOn();
       isWalking = 0;
@@ -220,8 +224,6 @@ void main (void) {
         3 -> 00111111
          */
         palletteNum = ~palletteNum;
-
-
       }
       else if(mainCharState == MAIN_CHAR_DYING) {
         //Animation
@@ -244,14 +246,13 @@ void main (void) {
         isHidden = 1;
 
         // Reload candle (TODO better way to do this)
-        candleCount = 1;
-        temp1 = CANDLE_SPRITE_INDEX;
+        candlesLeft = candleCount;
+
         for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
-            SPRITES[temp1++] = 0x84;//candles[temp2].y; //Y
-            SPRITES[temp1++] = 0x10; //sprite
-            SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
-            SPRITES[temp1++] = 0x40 + temp1;//candles[temp2].x; //X
+          candles[temp2].picked_up = 0;
         }
+
+        drawCandles();
 
         gameState = GAME_STATE_PLAYING_LEVEL;//GAME_STATE_LOADED_WAITING;
       }
@@ -260,22 +261,21 @@ void main (void) {
       levelNum += 1;
       levelNum = levelNum % 3; //Currently only 3
       gameState = GAME_STATE_LOADING;
-      //isHidden = 0;
-
-      // Reload candle (TODO better way to do this)
-      candleCount = 1;
-      temp1 = CANDLE_SPRITE_INDEX;
-      for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
-          SPRITES[temp1++] = 0x84;//candles[temp2].y; //Y
-          SPRITES[temp1++] = 0x10; //sprite
-          SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
-          SPRITES[temp1++] = 0x40 + temp1;//candles[temp2].x; //X
-      }
     }
 
     Music_Update();
 
     NMI_flag = 0;
+  }
+}
+
+void drawCandles(void) {
+  temp1 = CANDLE_SPRITE_INDEX;
+  for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
+    SPRITES[temp1++] = candles[temp2].y + 4;//candles[temp2].y; //Y
+    SPRITES[temp1++] = 0x10; //sprite
+    SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    SPRITES[temp1++] = candles[temp2].x + 4;//candles[temp2].x; //X
   }
 }
 
@@ -356,6 +356,7 @@ void changePallette() {
 #define BLOCK_ID_DEATH 0x04
 #define BLOCK_ID_START 0x06
 #define BLOCK_ID_END   0x08
+#define BLOCK_CANDLE   0x0A
 
 //Would be better to do in asm (like in UnCollision) but haven't figured out a good way yet
 void loadCollisionFromNametables(void)
@@ -365,6 +366,7 @@ void loadCollisionFromNametables(void)
 
   //First read is always invalid
   tempInt = *((unsigned char*)0x2007);
+  numCandles = 0;
 
   for(tempInt = 0 ; tempInt < 240 ; tempInt++) {
     //Top left of 2x2 square
@@ -376,6 +378,12 @@ void loadCollisionFromNametables(void)
     if(temp1 == BLOCK_ID_START) {
       startX = 16*(tempInt % 16);
       startY = 16*(tempInt/16);
+    }
+    else if(temp1 == BLOCK_CANDLE) {
+      numCandles++;
+      candles[numCandles].x = 16*(tempInt % 16);
+      candles[numCandles].y = 16*(tempInt/16);
+      candles[numCandles].picked_up = 0;
     }
 
     //Burn the right side of 2x2
@@ -450,13 +458,16 @@ void putCharInBackgroundVars(void) {
 
 void checkCandleCollision(void) {
  for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
-   if(newY > 0x7A && newY < 0x83 && newX > 0x48 && newX < 0x58) {
-     // Hide candle
-     SPRITES[CANDLE_SPRITE_INDEX] = 0x00;
-     SPRITES[CANDLE_SPRITE_INDEX + 3] = 0x00;
+   if(candles[temp2].picked_up == 0) {
+     if(newY == candles[temp2].y && newX == candles[temp2].x) {
+       // Hide candle
+       candles[temp2].picked_up = 1;
+       candlesLeft--;
 
-     candleCount--;
-     temp2--;
+       temp1 = temp2*4 + CANDLE_SPRITE_INDEX;
+       SPRITES[temp1] = 0x00;
+       SPRITES[temp1 + 3] = 0x00;
+     }
    }
  }
 }
@@ -535,7 +546,7 @@ void checkBackgroundCollision(void) {
     else if(temp1 == BLOCK_ID_DEATH) {
       mainCharState = MAIN_CHAR_WILL_DIE;
     }
-    else if(temp1 == BLOCK_ID_END && candleCount == 0) {
+    else if(temp1 == BLOCK_ID_END && candlesLeft == 0) {
       gameState = GAME_STATE_LEVEL_COMPLETE;
     }
 

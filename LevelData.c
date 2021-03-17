@@ -38,8 +38,6 @@ void loadLevel(void) {
 	PPU_ADDRESS = 0x20; // address of nametable #0 = 0x2000
 	PPU_ADDRESS = 0x00;
 	UnRLE(LEVELS[levelNum]);	// uncompresses our data
-
-  //loadCollisionFromNametables();
 }
 /*
 

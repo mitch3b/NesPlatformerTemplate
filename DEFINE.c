@@ -67,6 +67,7 @@ void move(void);
 #define CANDLE_SPRITE_INDEX 0x10
 
 // Prototypes
+void drawCandles(void);
 void every_frame(void);
 void allOff(void);
 void allOn(void);
