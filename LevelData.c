@@ -4,6 +4,8 @@
 #include "Graphics/level2.h"
 #include "Graphics/Colors.h"
 
+#define NUM_LEVELS 4
+
 const unsigned char* LEVELS[] = {levelEasy, levelMedium, level1, level2};
 
 const unsigned char PALETTE[]={

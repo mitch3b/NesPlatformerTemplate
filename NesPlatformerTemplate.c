@@ -92,7 +92,7 @@ void main (void) {
   allOff(); // turn off screen
 	song = 0;
   gameState = GAME_STATE_LOADING;
-  levelNum = 3;
+  levelNum = 0;
   startX = 1;
   startY = 0;
   isHidden = 0;
@@ -314,7 +314,7 @@ void main (void) {
     }
     else if (gameState == GAME_STATE_LEVEL_COMPLETE) {
       levelNum += 1;
-      levelNum = levelNum % 3; //Currently only 3
+      levelNum = levelNum % NUM_LEVELS;
       gameState = GAME_STATE_LOADING;
     }
 
@@ -585,9 +585,9 @@ void putCharInBackgroundVars(void) {
 }
 
 void checkEnemyCollision(void) {
- for(temp2 = 0 ; temp2 < 1 ; temp2++) {
-   if(newY <= enemies[temp2].y && newY + CHARACTER_HEIGHT >= enemies[temp2].y &&
-      newX <= enemies[temp2].x && newX + CHARACTER_WIDTH >= enemies[temp2].x) {
+ for(temp2 = 0 ; temp2 < numEnemies ; temp2++) {
+   if(newY <= enemies[temp2].y + CHARACTER_HEIGHT && newY + CHARACTER_HEIGHT >= enemies[temp2].y &&
+      newX <= enemies[temp2].x + CHARACTER_WIDTH && newX + CHARACTER_WIDTH >= enemies[temp2].x) {
       
       mainCharState = MAIN_CHAR_DYING;
       timer = DEAD_FOR_THIS_MANY_FRAMES;
