@@ -27,6 +27,7 @@ unsigned char SPRITES[256];
 #pragma bss-name (push, "ZEROPAGE")
 unsigned char timer;
 unsigned char isHidden;
+unsigned char avoidMovementBuffer;
 unsigned char checkCollision;
 unsigned char isWalking;
 unsigned char walkingDirection;
@@ -112,6 +113,7 @@ void main (void) {
       hiddenModeOn();
       isWalking = 0;
       mainCharState = MAIN_CHAR_ALIVE;
+      avoidMovementBuffer = 0;
 
       newX = startX;
       newY = startY;
@@ -134,9 +136,16 @@ void main (void) {
           hiddenModeOn();
           gameState = GAME_STATE_PLAYING_LEVEL;
       }
-   }
-   else if (gameState == GAME_STATE_PLAYING_LEVEL) {
+    }
+    else if (gameState == GAME_STATE_PLAYING_LEVEL) {     
       if(mainCharState == MAIN_CHAR_ALIVE || mainCharState == MAIN_CHAR_WILL_DIE) {
+        if((joypad1old & UP) == 0 &&
+           (joypad1old & DOWN) == 0 &&
+           (joypad1old & RIGHT) == 0 &&
+           (joypad1old & LEFT) == 0) {
+          avoidMovementBuffer = 1;
+        }
+
         //In game
         newX = SPRITES[MAIN_CHAR_SPRITE_INDEX + 3];
         newY = SPRITES[MAIN_CHAR_SPRITE_INDEX];
@@ -148,8 +157,11 @@ void main (void) {
         else if((joypad1old & A_BUTTON) != 0 && (joypad1 & A_BUTTON) == 0) {
           hiddenModeOn();
         }
-
-        move();
+        
+        if(avoidMovementBuffer > 0) {  
+          move();
+        }
+        
         checkBackgroundCollision();
         checkCandleCollision();
 
@@ -240,6 +252,7 @@ void main (void) {
         prevPalletteToUpdate2 = palletteToUpdate2;
         prevPalletteToUpdate3 = palletteToUpdate3;
         palletteNum = 0;
+        avoidMovementBuffer = 0;
 
         mainCharState = MAIN_CHAR_ALIVE;
         updateSprites(); //Might be a cleaner way to reset the level
