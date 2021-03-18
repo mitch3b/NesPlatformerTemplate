@@ -1,9 +1,10 @@
 #include "Graphics/levelEasy.h"
 #include "Graphics/levelMedium.h"
 #include "Graphics/level1.h"
+#include "Graphics/level2.h"
 #include "Graphics/Colors.h"
 
-const unsigned char* LEVELS[] = {levelEasy, levelMedium, level1};
+const unsigned char* LEVELS[] = {levelEasy, levelMedium, level1, level2};
 
 const unsigned char PALETTE[]={
   // Top is background

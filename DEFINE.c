@@ -44,6 +44,7 @@ unsigned char temp1;
 unsigned char temp2;
 unsigned char temp3;
 unsigned char temp4;
+unsigned char temp5;
 char tempSigned;
 unsigned int tempInt;
 unsigned int tempInt2;
@@ -65,9 +66,13 @@ void move(void);
 
 #define MAIN_CHAR_SPRITE_INDEX	0x0
 #define CANDLE_SPRITE_INDEX 0x10
+#define ENEMY_SPRITE_INDEX 0x20
 
 // Prototypes
 void drawCandles(void);
+void checkEnemyCollision(void);
+void updateEnemies(void);
+void drawEnemies(void);
 void every_frame(void);
 void allOff(void);
 void allOn(void);

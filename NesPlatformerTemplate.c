@@ -9,8 +9,20 @@ typedef struct {
 
 #define MAX_CANDLES 4
 candle_struct candles[MAX_CANDLES];
-
 unsigned char candlesLeft;
+
+#define ENEMY_SPEED 2
+typedef struct {
+  unsigned char startX;
+  unsigned char startY;
+  unsigned char x;
+  unsigned char y;
+  unsigned char isMoving;
+} horiz_enemy_struct;
+
+#define MAX_ENEMIES 5
+horiz_enemy_struct enemies[MAX_ENEMIES];
+unsigned char numEnemies;
 
 // Physics
 #define GRAVITY 1
@@ -19,6 +31,15 @@ unsigned char candlesLeft;
 #define MAX_JUMP_COUNT 10 //Number of frames you can hold jump and keep traveling up
 #define MAX_VELOCITY_X 1
 #define MAX_VELOCITY_WITH_B_X 2
+
+// Blocks
+#define BLOCK_ID_SOLID 0x01
+#define BLOCK_ID_OPEN  0x02
+#define BLOCK_ID_DEATH 0x04
+#define BLOCK_ID_START 0x06
+#define BLOCK_ID_END   0x08
+#define BLOCK_CANDLE   0x0A
+#define BLOCK_ENEMY    0x0B
 
 #pragma bss-name (push, "OAM")
 unsigned char SPRITES[256];
@@ -71,7 +92,7 @@ void main (void) {
   allOff(); // turn off screen
 	song = 0;
   gameState = GAME_STATE_LOADING;
-  levelNum = 0;
+  levelNum = 3;
   startX = 1;
   startY = 0;
   isHidden = 0;
@@ -103,12 +124,20 @@ void main (void) {
     if (gameState == GAME_STATE_LOADING) {
 			allOff();
 
+      _Hide_Sprites();
 			loadLevel();
 
       loadCollisionFromNametables();
       
       candlesLeft = candleCount;
       drawCandles();
+      
+      for(temp1 = 0 ; temp1 < numEnemies ; temp1++) {
+        enemies[temp1].x = enemies[temp1].startX;
+        enemies[temp1].y = enemies[temp1].startY;
+      }
+      
+      drawEnemies();
 
       hiddenModeOn();
       isWalking = 0;
@@ -164,8 +193,12 @@ void main (void) {
         
         checkBackgroundCollision();
         checkCandleCollision();
+        checkEnemyCollision();
+                
+        updateEnemies();
 
         updateSprites();
+        drawEnemies();
 
         //TODO probably much faster to just do left/right shifts
         //TODO store whole palette in mem, only change the bytes we want and change old ones back
@@ -253,10 +286,19 @@ void main (void) {
         prevPalletteToUpdate3 = palletteToUpdate3;
         palletteNum = 0;
         avoidMovementBuffer = 0;
+        isWalking = 0;
 
         mainCharState = MAIN_CHAR_ALIVE;
         updateSprites(); //Might be a cleaner way to reset the level
         isHidden = 1;
+        
+        for(temp1 = 0 ; temp1 < numEnemies ; temp1++) {
+          enemies[temp1].x = enemies[temp1].startX;
+          enemies[temp1].y = enemies[temp1].startY;
+          enemies[temp1].isMoving = 0;
+        }
+        
+        drawEnemies();
 
         // Reload candle (TODO better way to do this)
         candlesLeft = candleCount;
@@ -289,6 +331,78 @@ void drawCandles(void) {
     SPRITES[temp1++] = 0x10; //sprite
     SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
     SPRITES[temp1++] = candles[temp2].x + 4;//candles[temp2].x; //X
+  }
+}
+
+void updateEnemies(void) {
+  for(temp5 = 0; temp5 < numEnemies ; temp5++){
+    if(enemies[temp5].isMoving > 0) {
+      if(enemies[temp5].isMoving == 1) {
+        temp1 = enemies[temp5].x + ENEMY_SPEED;
+        
+        //temp3 points to top right
+        temp4 = temp1 + 15;
+        temp4 = temp4/16;
+        temp2 = enemies[temp5].y/16;
+        temp3 = temp2*16 + temp4;
+      }
+      else {
+        temp1 = enemies[temp5].x - ENEMY_SPEED;
+        
+        //temp3 points to top left
+        temp4 = temp1/16;
+        temp2 = enemies[temp5].y/16;
+        temp3 = temp2*16 + temp4;
+      }
+        
+      if(collision[temp3] == BLOCK_ID_SOLID || collision[temp3] == BLOCK_ID_DEATH) {
+        enemies[temp5].isMoving = 0;
+      }
+      else {
+        enemies[temp5].x = temp1;
+      }
+    }
+    else {
+      if(newY == enemies[temp5].y) {
+        if(newX > enemies[temp5].x){
+          enemies[temp5].isMoving = 1;       
+        }
+        else {
+          enemies[temp5].isMoving = 2;
+        }
+      }
+    }
+  }
+}
+
+void drawEnemies(void) {
+  temp1 = ENEMY_SPRITE_INDEX;
+  
+  for(temp5 = 0; temp5 < numEnemies ; temp5++){
+    temp2 = 0x21;
+    if(enemies[temp5].isMoving > 0) {
+      temp2 = 0x20;
+    }
+    
+    SPRITES[temp1++] = enemies[temp5].y;//candles[temp2].y; //Y
+    SPRITES[temp1++] = temp2; //sprite
+    SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    SPRITES[temp1++] = enemies[temp5].x;//candles[temp2].x; //X
+    
+    SPRITES[temp1++] = enemies[temp5].y;//candles[temp2].y; //Y
+    SPRITES[temp1++] = temp2; //sprite
+    SPRITES[temp1++] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    SPRITES[temp1++] = enemies[temp5].x + 8;//candles[temp2].x; //X
+    
+    SPRITES[temp1++] = enemies[temp5].y + 8;//candles[temp2].y; //Y
+    SPRITES[temp1++] = 0x30; //sprite
+    SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    SPRITES[temp1++] = enemies[temp5].x;//candles[temp2].x; //X
+    
+    SPRITES[temp1++] = enemies[temp5].y + 8;//candles[temp2].y; //Y
+    SPRITES[temp1++] = 0x30; //sprite
+    SPRITES[temp1++] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    SPRITES[temp1++] = enemies[temp5].x + 8;//candles[temp2].x; //X
   }
 }
 
@@ -364,13 +478,6 @@ void changePallette() {
   allOn();
 }
 
-#define BLOCK_ID_SOLID 0x01
-#define BLOCK_ID_OPEN  0x02
-#define BLOCK_ID_DEATH 0x04
-#define BLOCK_ID_START 0x06
-#define BLOCK_ID_END   0x08
-#define BLOCK_CANDLE   0x0A
-
 //Would be better to do in asm (like in UnCollision) but haven't figured out a good way yet
 void loadCollisionFromNametables(void)
 {
@@ -380,6 +487,7 @@ void loadCollisionFromNametables(void)
   //First read is always invalid
   tempInt = *((unsigned char*)0x2007);
   candleCount = 0;
+  numEnemies = 0;
 
   for(tempInt = 0 ; tempInt < 240 ; tempInt++) {
     //Top left of 2x2 square
@@ -397,6 +505,13 @@ void loadCollisionFromNametables(void)
       candles[candleCount].y = 16*(tempInt/16);
       candles[candleCount].picked_up = 0;
       candleCount++;
+    }
+    else if(temp1 == BLOCK_ENEMY) {
+      enemies[numEnemies].startX = 16*(tempInt % 16);
+      enemies[numEnemies].startY = 16*(tempInt/16);
+      enemies[numEnemies].x = enemies[numEnemies].startX;
+      enemies[numEnemies].y = enemies[numEnemies].startY;
+      numEnemies++;
     }
 
     //Burn the right side of 2x2
@@ -467,6 +582,17 @@ void putCharInBackgroundVars(void) {
   collisionY = newY;
   collisionWidth = CHARACTER_WIDTH;
   collisionHeight = CHARACTER_HEIGHT;
+}
+
+void checkEnemyCollision(void) {
+ for(temp2 = 0 ; temp2 < 1 ; temp2++) {
+   if(newY <= enemies[temp2].y && newY + CHARACTER_HEIGHT >= enemies[temp2].y &&
+      newX <= enemies[temp2].x && newX + CHARACTER_WIDTH >= enemies[temp2].x) {
+      
+      mainCharState = MAIN_CHAR_DYING;
+      timer = DEAD_FOR_THIS_MANY_FRAMES;
+   }
+ }
 }
 
 void checkCandleCollision(void) {
