@@ -36,7 +36,8 @@ unsigned char numEnemies;
 // Blocks
 #define BLOCK_ID_SOLID 0x01
 #define BLOCK_ID_OPEN  0x02
-#define BLOCK_ID_DEATH 0x04
+#define BLOCK_ID_DEATH_SOLID 0x04
+#define BLOCK_ID_DEATH 0x24
 #define BLOCK_ID_START 0x06
 #define BLOCK_ID_END   0x08
 #define BLOCK_CANDLE   0x0A
@@ -380,7 +381,7 @@ void updateEnemies(void) {
         }
       }
 
-      if(collision[temp3] == BLOCK_ID_SOLID || collision[temp3] == BLOCK_ID_DEATH) {
+      if(collision[temp3] == BLOCK_ID_SOLID || collision[temp3] == BLOCK_ID_DEATH_SOLID) {
         enemies[temp5].isMoving = 0;
       }
       else {
@@ -719,7 +720,9 @@ void checkBackgroundCollision(void) {
          temp1 = BLOCK_ID_SOLID;
     }
     else if(collision[temp3] == BLOCK_ID_DEATH ||
-            collision[temp4] == BLOCK_ID_DEATH) {
+            collision[temp4] == BLOCK_ID_DEATH ||
+            collision[temp3] == BLOCK_ID_DEATH_SOLID ||
+            collision[temp4] == BLOCK_ID_DEATH_SOLID) {
         temp1 = BLOCK_ID_DEATH;
     }
     else if(collision[temp3] == BLOCK_ID_END &&
