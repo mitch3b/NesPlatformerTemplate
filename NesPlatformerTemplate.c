@@ -347,7 +347,7 @@ void updateEnemies(void) {
           //temp3 points to bottom left
           temp4 = enemies[temp5].x;
           temp4 = temp4/16;
-          temp2 = (temp1 - 1)/16;
+          temp2 = (temp1 + 15)/16;
           temp3 = temp2*16 + temp4;
         }
         else {
