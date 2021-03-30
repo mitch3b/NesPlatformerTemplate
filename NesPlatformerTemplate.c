@@ -89,7 +89,7 @@ void main (void) {
   allOff(); // turn off screen
 	song = 0;
   gameState = GAME_STATE_LOADING;
-  levelNum = 3;
+  levelNum = 0;
   startX = 1;
   startY = 0;
   isHidden = 0;
@@ -335,20 +335,22 @@ void updateEnemies(void) {
   for(temp5 = 0; temp5 < numEnemies ; temp5++){
     if(enemies[temp5].isHoriz == 2 && candlesLeft == 0) {
       //Try moving right at him
-      if(enemies[temp5].x == newX) {
-        if(enemies[temp5].y > newY) {
-          enemies[temp5].isMoving = 2;//up
+      if(enemies[temp5].x % NUM_PIXELS_IN_TILE == 0 && enemies[temp5].y % NUM_PIXELS_IN_TILE == 0) {
+        if(enemies[temp5].x == newX) {
+          if(enemies[temp5].y > newY) {
+            enemies[temp5].isMoving = 2;//up
+          }
+          else {
+            enemies[temp5].isMoving = 0;//down
+          }
         }
-        else {
-          enemies[temp5].isMoving = 0;//down
-        }
-      }
-      else if(enemies[temp5].y == newY) {
-        if(enemies[temp5].x > newX) {
-          enemies[temp5].isMoving = 1;//left
-        }
-        else {
-          enemies[temp5].isMoving = 3;//right
+        else if(enemies[temp5].y == newY) {
+          if(enemies[temp5].x > newX) {
+            enemies[temp5].isMoving = 1;//left
+          }
+          else {
+            enemies[temp5].isMoving = 3;//right
+          }
         }
       }
 
@@ -493,16 +495,19 @@ void drawEnemies(void) {
   temp1 = ENEMY_SPRITE_INDEX;
 
   for(temp5 = 0; temp5 < numEnemies ; temp5++){
-    if(enemies[numEnemies].isHoriz == 0 || enemies[numEnemies].isHoriz == 1) {
+    if(enemies[temp5].isHoriz == 0 || enemies[temp5].isHoriz == 1) {
       temp2 = 0x21;
       if(enemies[temp5].x == newX || enemies[temp5].y == newY) {
         temp2 = 0x20;
       }
       temp3 = 0x30;
     }
-    else if(enemies[numEnemies].isHoriz == 2) {
-      temp2 = 0x21;
-      temp3 = 0x31;
+    else if(enemies[temp5].isHoriz == 2) {
+      temp2 = 0x22;
+      if(candlesLeft == 0) {
+        temp2 = 0x23;
+      }
+      temp3 = 0x32;
     }
 
     SPRITES[temp1++] = enemies[temp5].y;
@@ -814,6 +819,11 @@ void checkBackgroundCollision(void) {
     else if(collision[temp3] == BLOCK_ID_END &&
             collision[temp4] == BLOCK_ID_END) {
         temp1 = BLOCK_ID_END;
+    }
+    else if(candleCount > 0 && 
+             (collision[temp3] == END_ENEMY ||
+              collision[temp4] == END_ENEMY)) {
+      temp1 = BLOCK_ID_DEATH;
     }
 
     if(temp1 == BLOCK_ID_SOLID) {
