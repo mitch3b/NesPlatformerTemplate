@@ -415,26 +415,26 @@ void drawEnemies(void) {
 
   for(temp5 = 0; temp5 < numEnemies ; temp5++){
     temp2 = 0x21;
-    if(enemies[temp5].isMoving > 0) {
+    if(enemies[temp5].x == newX || enemies[temp5].y == newY) {
       temp2 = 0x20;
     }
 
-    SPRITES[temp1++] = enemies[temp5].y;//candles[temp2].y; //Y
+    SPRITES[temp1++] = enemies[temp5].y;
     SPRITES[temp1++] = temp2; //sprite
     SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
-    SPRITES[temp1++] = enemies[temp5].x;//candles[temp2].x; //X
+    SPRITES[temp1++] = enemies[temp5].x;
 
-    SPRITES[temp1++] = enemies[temp5].y;//candles[temp2].y; //Y
+    SPRITES[temp1++] = enemies[temp5].y;
     SPRITES[temp1++] = temp2; //sprite
     SPRITES[temp1++] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
-    SPRITES[temp1++] = enemies[temp5].x + 8;//candles[temp2].x; //X
+    SPRITES[temp1++] = enemies[temp5].x + 8;
 
-    SPRITES[temp1++] = enemies[temp5].y + 8;//candles[temp2].y; //Y
+    SPRITES[temp1++] = enemies[temp5].y + 8;
     SPRITES[temp1++] = 0x30; //sprite
     SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
     SPRITES[temp1++] = enemies[temp5].x;//candles[temp2].x; //X
 
-    SPRITES[temp1++] = enemies[temp5].y + 8;//candles[temp2].y; //Y
+    SPRITES[temp1++] = enemies[temp5].y + 8;
     SPRITES[temp1++] = 0x30; //sprite
     SPRITES[temp1++] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
     SPRITES[temp1++] = enemies[temp5].x + 8;//candles[temp2].x; //X
