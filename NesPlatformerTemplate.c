@@ -48,15 +48,15 @@ unsigned char checkCollision;
 unsigned char isWalking;
 unsigned char walkingDirection;
 unsigned char mainCharState;
-unsigned char palletteToUpdate;
-unsigned char palletteNum;
-unsigned char prevPalletteToUpdate;
-unsigned char palletteToUpdate2;
-unsigned char palletteNum2;
-unsigned char prevPalletteToUpdate2;
-unsigned char palletteToUpdate3;
-unsigned char palletteNum3;
-unsigned char prevPalletteToUpdate3;
+unsigned char paletteToUpdate;
+unsigned char paletteNum;
+unsigned char prevPaletteToUpdate;
+unsigned char paletteToUpdate2;
+unsigned char paletteNum2;
+unsigned char prevPaletteToUpdate2;
+unsigned char paletteToUpdate3;
+unsigned char paletteNum3;
+unsigned char prevPaletteToUpdate3;
 
 #define GAME_STATE_LOADING 0
 #define GAME_STATE_LOADED_WAITING 1
@@ -92,15 +92,15 @@ void main (void) {
   startY = 0;
   isHidden = 0;
 
-  palletteToUpdate = 0;
-  palletteNum = 0;
-  prevPalletteToUpdate = 0;
-  palletteToUpdate2 = 0;
-  palletteNum2 = 0;
-  prevPalletteToUpdate2 = 0;
-  palletteToUpdate3 = 0;
-  palletteNum3 = 0;
-  prevPalletteToUpdate3 = 0;
+  paletteToUpdate = 0;
+  paletteNum = 0;
+  prevPaletteToUpdate = 0;
+  paletteToUpdate2 = 0;
+  paletteNum2 = 0;
+  prevPaletteToUpdate2 = 0;
+  paletteToUpdate3 = 0;
+  paletteNum3 = 0;
+  prevPaletteToUpdate3 = 0;
 
   loadPalette();
 	resetScroll();
@@ -175,7 +175,7 @@ void main (void) {
         newY = SPRITES[MAIN_CHAR_SPRITE_INDEX];
 
         if((joypad1 & A_BUTTON) != 0 && (joypad1old & A_BUTTON) == 0) {
-          //changePallette();
+          //changePalette();
           hiddenModeOff();
         }
         else if((joypad1old & A_BUTTON) != 0 && (joypad1 & A_BUTTON) == 0) {
@@ -197,9 +197,9 @@ void main (void) {
 
         //TODO probably much faster to just do left/right shifts
         //TODO store whole palette in mem, only change the bytes we want and change old ones back
-        prevPalletteToUpdate = palletteToUpdate;
-        prevPalletteToUpdate2 = palletteToUpdate2;
-        prevPalletteToUpdate3 = palletteToUpdate3;
+        prevPaletteToUpdate = paletteToUpdate;
+        prevPaletteToUpdate2 = paletteToUpdate2;
+        prevPaletteToUpdate3 = paletteToUpdate3;
 
         temp1 = newX + 8;
         temp2 = newY + 8;
@@ -211,59 +211,59 @@ void main (void) {
           temp2 = temp2 - 1;
         }
 
-        temp3 = temp1/NUM_PIXELS_X_IN_PALLETTE_BYTE;
-        palletteToUpdate = temp2/NUM_PIXELS_X_IN_PALLETTE_BYTE;
-        palletteToUpdate = palletteToUpdate*NUM_PALLETTES_ACROSS_IN_BYTE;
-        palletteToUpdate = palletteToUpdate + temp3;
-        temp3 = temp1 % NUM_PIXELS_X_IN_PALLETTE_BYTE;
+        temp3 = temp1/NUM_PIXELS_X_IN_PALETTE_BYTE;
+        paletteToUpdate = temp2/NUM_PIXELS_X_IN_PALETTE_BYTE;
+        paletteToUpdate = paletteToUpdate*NUM_PALETTES_ACROSS_IN_BYTE;
+        paletteToUpdate = paletteToUpdate + temp3;
+        temp3 = temp1 % NUM_PIXELS_X_IN_PALETTE_BYTE;
         temp3 = temp3/16;
 
-        temp4 = temp2 % NUM_PIXELS_X_IN_PALLETTE_BYTE;
+        temp4 = temp2 % NUM_PIXELS_X_IN_PALETTE_BYTE;
         temp4 = temp4/16;
         temp4 = temp4*2;
 
         if(temp3 == 0) {
           //Left side
-          palletteToUpdate2 = palletteToUpdate - 1;
-          palletteNum2 = 1;
-          palletteNum3 = 0;
+          paletteToUpdate2 = paletteToUpdate - 1;
+          paletteNum2 = 1;
+          paletteNum3 = 0;
         }
         else {
           //Right side
-          palletteToUpdate2 = palletteToUpdate + 1;
-          palletteNum2 = 0;
-          palletteNum3 = 1;
+          paletteToUpdate2 = paletteToUpdate + 1;
+          paletteNum2 = 0;
+          paletteNum3 = 1;
         }
 
         if(temp4 == 0) {
           //top side
-          palletteToUpdate3 = palletteToUpdate - 8;
-          palletteNum3 = palletteNum3 + 2;
+          paletteToUpdate3 = paletteToUpdate - 8;
+          paletteNum3 = paletteNum3 + 2;
         }
         else {
           //bottom side
-          palletteToUpdate3 = palletteToUpdate + 8;
-          palletteNum2 = palletteNum2 + 2;
+          paletteToUpdate3 = paletteToUpdate + 8;
+          paletteNum2 = paletteNum2 + 2;
         }
 
-        temp2 = palletteNum2*2;
-        palletteNum2 = 0x03 << temp2;
-        //palletteNum2 = palletteNum2 | 0xFF;
-        temp2 = palletteNum3*2;
-        palletteNum3 = 0x03 << temp2;
-        //palletteNum3 = palletteNum3 | 0xFF;
+        temp2 = paletteNum2*2;
+        paletteNum2 = 0x03 << temp2;
+        //paletteNum2 = paletteNum2 | 0xFF;
+        temp2 = paletteNum3*2;
+        paletteNum3 = 0x03 << temp2;
+        //paletteNum3 = paletteNum3 | 0xFF;
 
         temp3 = temp3 + temp4;
         temp3 = 2*temp3;
-        palletteNum = 0xC0;
-        palletteNum = palletteNum >> temp3;
+        paletteNum = 0xC0;
+        paletteNum = paletteNum >> temp3;
         /*
         0 -> 11111100
         1 -> 11110011
         2 -> 11001111
         3 -> 00111111
          */
-        palletteNum = ~palletteNum;
+        paletteNum = ~paletteNum;
       }
       else if(mainCharState == MAIN_CHAR_DYING) {
         //Animation
@@ -276,10 +276,10 @@ void main (void) {
       else if (mainCharState == MAIN_CHAR_DEAD) {
         newX = startX;
         newY = startY;
-        prevPalletteToUpdate = palletteToUpdate;
-        prevPalletteToUpdate2 = palletteToUpdate2;
-        prevPalletteToUpdate3 = palletteToUpdate3;
-        palletteNum = 0;
+        prevPaletteToUpdate = paletteToUpdate;
+        prevPaletteToUpdate2 = paletteToUpdate2;
+        prevPaletteToUpdate3 = paletteToUpdate3;
+        paletteNum = 0;
         avoidMovementBuffer = 0;
         isWalking = 0;
 
@@ -324,7 +324,7 @@ void drawCandles(void) {
   for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
     SPRITES[temp1++] = candles[temp2].y + 4;//candles[temp2].y; //Y
     SPRITES[temp1++] = 0x10; //sprite
-    SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
     SPRITES[temp1++] = candles[temp2].x + 4;//candles[temp2].x; //X
   }
 }
@@ -421,22 +421,22 @@ void drawEnemies(void) {
 
     SPRITES[temp1++] = enemies[temp5].y;//candles[temp2].y; //Y
     SPRITES[temp1++] = temp2; //sprite
-    SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
     SPRITES[temp1++] = enemies[temp5].x;//candles[temp2].x; //X
 
     SPRITES[temp1++] = enemies[temp5].y;//candles[temp2].y; //Y
     SPRITES[temp1++] = temp2; //sprite
-    SPRITES[temp1++] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    SPRITES[temp1++] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
     SPRITES[temp1++] = enemies[temp5].x + 8;//candles[temp2].x; //X
 
     SPRITES[temp1++] = enemies[temp5].y + 8;//candles[temp2].y; //Y
     SPRITES[temp1++] = 0x30; //sprite
-    SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
     SPRITES[temp1++] = enemies[temp5].x;//candles[temp2].x; //X
 
     SPRITES[temp1++] = enemies[temp5].y + 8;//candles[temp2].y; //Y
     SPRITES[temp1++] = 0x30; //sprite
-    SPRITES[temp1++] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+    SPRITES[temp1++] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
     SPRITES[temp1++] = enemies[temp5].x + 8;//candles[temp2].x; //X
   }
 }
@@ -447,31 +447,31 @@ void every_frame(void) {
 
   allOff();
 
-  //Clear prev pallette changes
+  //Clear prev palette changes
   PPU_ADDRESS = 0x23;
-  PPU_ADDRESS = 0xc0 + prevPalletteToUpdate;
+  PPU_ADDRESS = 0xc0 + prevPaletteToUpdate;
   PPU_DATA = 0;
   PPU_ADDRESS = 0x23;
-  PPU_ADDRESS = 0xc0 + prevPalletteToUpdate2;
+  PPU_ADDRESS = 0xc0 + prevPaletteToUpdate2;
   PPU_DATA = 0;
   PPU_ADDRESS = 0x23;
-  PPU_ADDRESS = 0xc0 + prevPalletteToUpdate3;
+  PPU_ADDRESS = 0xc0 + prevPaletteToUpdate3;
   PPU_DATA = 0;
 
   PPU_ADDRESS = 0x23;
-  PPU_ADDRESS = 0xc0 + palletteToUpdate;
+  PPU_ADDRESS = 0xc0 + paletteToUpdate;
 
-  PPU_DATA = palletteNum;
-
-  PPU_ADDRESS = 0x23;
-  PPU_ADDRESS = 0xc0 + palletteToUpdate2;
-
-  PPU_DATA = palletteNum2;
+  PPU_DATA = paletteNum;
 
   PPU_ADDRESS = 0x23;
-  PPU_ADDRESS = 0xc0 + palletteToUpdate3;
+  PPU_ADDRESS = 0xc0 + paletteToUpdate2;
 
-  PPU_DATA = palletteNum3;
+  PPU_DATA = paletteNum2;
+
+  PPU_ADDRESS = 0x23;
+  PPU_ADDRESS = 0xc0 + paletteToUpdate3;
+
+  PPU_DATA = paletteNum3;
   allOn();
 
   SCROLL = 0;
@@ -496,7 +496,7 @@ void hiddenModeOn() {
   Wait_Vblank();
 }
 
-void changePallette() {
+void changePalette() {
   temp1 = newX % 16;
   temp2 = newY % 16;
   temp3 = temp2*8;
@@ -781,10 +781,10 @@ void updateSprites(void) {
     }
 
     if((Frame_Count % 20) < 10) {
-      SPRITES[temp1 + 1] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+      SPRITES[temp1 + 1] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
     }
     else {
-      SPRITES[temp1 + 1] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x pallette)
+      SPRITES[temp1 + 1] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
     }
 
     temp1 += 4;

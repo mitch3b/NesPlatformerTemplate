@@ -17,8 +17,8 @@
 #define B_BUTTON	0x40
 #define A_BUTTON	0x80
 
-#define NUM_PIXELS_X_IN_PALLETTE_BYTE 32
-#define NUM_PALLETTES_ACROSS_IN_BYTE 8
+#define NUM_PIXELS_X_IN_PALETTE_BYTE 32
+#define NUM_PALETTES_ACROSS_IN_BYTE 8
 
 // Globals
 // our startup code initialized all values to zero
@@ -85,7 +85,7 @@ void checkBackgroundCollision(void);
 void loadCollisionFromNametables(void);
 void hiddenModeOff(void);
 void hiddenModeOn(void);
-void changePallette(void);
+void changePalette(void);
 
 char collisionX;
 char collisionY;
