@@ -89,7 +89,7 @@ void main (void) {
   allOff(); // turn off screen
 	song = 0;
   gameState = GAME_STATE_LOADING;
-  levelNum = 0;
+  levelNum = 3;
   startX = 1;
   startY = 0;
   isHidden = 0;
@@ -495,10 +495,17 @@ void drawEnemies(void) {
   temp1 = ENEMY_SPRITE_INDEX;
 
   for(temp5 = 0; temp5 < numEnemies ; temp5++){
-    if(enemies[temp5].isHoriz == 0 || enemies[temp5].isHoriz == 1) {
+    if(enemies[temp5].isHoriz == 0) {
       temp2 = 0x21;
-      if(enemies[temp5].x == newX || enemies[temp5].y == newY) {
+      if(enemies[temp5].x == newX || enemies[temp5].y == newY || enemies[temp5].isMoving > 0) {
         temp2 = 0x20;
+      }
+      temp3 = 0x30;
+    }
+    else if(enemies[temp5].isHoriz == 1) {
+      temp2 = 0x21;
+      if(enemies[temp5].x == newX || enemies[temp5].y == newY || enemies[temp5].isMoving > 0 ) {
+        temp2 = 0x31;
       }
       temp3 = 0x30;
     }
