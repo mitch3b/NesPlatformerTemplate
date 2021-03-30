@@ -13,6 +13,13 @@ unsigned char candlesLeft;
 
 #define ENEMY_SPEED 2
 #define END_ENEMY_SPEED 1
+#define MOVE_DOWN  0
+#define MOVE_LEFT  1
+#define MOVE_UP    2
+#define MOVE_RIGHT 3
+#define END_ENEMY_SPEED 1
+#define END_ENEMY_SPEED 1
+#define END_ENEMY_SPEED 1
 typedef struct {
   unsigned char startX;
   unsigned char startY;
@@ -89,7 +96,7 @@ void main (void) {
   allOff(); // turn off screen
 	song = 0;
   gameState = GAME_STATE_LOADING;
-  levelNum = 3;
+  levelNum = 1;
   startX = 1;
   startY = 0;
   isHidden = 0;
@@ -338,25 +345,110 @@ void updateEnemies(void) {
       if(enemies[temp5].x % NUM_PIXELS_IN_TILE == 0 && enemies[temp5].y % NUM_PIXELS_IN_TILE == 0) {
         if(enemies[temp5].x == newX) {
           if(enemies[temp5].y > newY) {
-            enemies[temp5].isMoving = 2;//up
+            tempArray[0] = MOVE_UP;
+            //TODO these two should oscillate or randomize
+            tempArray[1] = MOVE_LEFT;
+            tempArray[2] = MOVE_RIGHT;
+            tempArray[3] = MOVE_DOWN;
           }
           else {
-            enemies[temp5].isMoving = 0;//down
+            tempArray[0] = MOVE_DOWN;
+            //TODO these two should oscillate or randomize
+            tempArray[1] = MOVE_LEFT;
+            tempArray[2] = MOVE_RIGHT;
+            tempArray[3] = MOVE_UP;
           }
         }
         else if(enemies[temp5].y == newY) {
           if(enemies[temp5].x > newX) {
-            enemies[temp5].isMoving = 1;//left
+            tempArray[0] = MOVE_LEFT;
+            //TODO these two should oscillate or randomize
+            tempArray[1] = MOVE_DOWN;
+            tempArray[2] = MOVE_UP;
+            tempArray[3] = MOVE_RIGHT;
           }
           else {
-            enemies[temp5].isMoving = 3;//right
+            tempArray[0] = MOVE_RIGHT;
+            //TODO these two should oscillate or randomize
+            tempArray[1] = MOVE_DOWN;
+            tempArray[2] = MOVE_UP;
+            tempArray[3] = MOVE_LEFT;
+          }
+        }
+        else {
+          // Move to whichever direction is furthest but direct
+          temp2 = enemies[temp5].x > newX;
+          temp3 = enemies[temp5].y > newY;
+          
+          if(temp2 && temp3) {
+            if(enemies[temp5].x - newX > enemies[temp5].y - newY) {
+              tempArray[0] = MOVE_UP;
+              tempArray[1] = MOVE_LEFT;
+              //TODO these two should oscillate or randomize
+              tempArray[2] = MOVE_DOWN;
+              tempArray[3] = MOVE_RIGHT;
+            }
+            else {
+              tempArray[0] = MOVE_LEFT;
+              tempArray[1] = MOVE_UP;
+              //TODO these two should oscillate or randomize
+              tempArray[2] = MOVE_DOWN;
+              tempArray[3] = MOVE_RIGHT;
+            }
+          }
+          else if(temp2 && !temp3) {
+            if(enemies[temp5].x - newX > newY - enemies[temp5].y) {
+              tempArray[0] = MOVE_DOWN;
+              tempArray[1] = MOVE_LEFT;
+              //TODO these two should oscillate or randomize
+              tempArray[2] = MOVE_UP;
+              tempArray[3] = MOVE_RIGHT;
+            }
+            else {
+              tempArray[0] = MOVE_LEFT;
+              tempArray[1] = MOVE_DOWN;
+              //TODO these two should oscillate or randomize
+              tempArray[2] = MOVE_UP;
+              tempArray[3] = MOVE_RIGHT;
+            }
+          }
+          else if(!temp2 && temp3) {
+            if(newX - enemies[temp5].x > enemies[temp5].y - newY) {
+              tempArray[0] = MOVE_UP;
+              tempArray[1] = MOVE_RIGHT;
+              //TODO these two should oscillate or randomize
+              tempArray[2] = MOVE_DOWN;
+              tempArray[3] = MOVE_LEFT;
+            }
+            else {
+              tempArray[0] = MOVE_RIGHT;
+              tempArray[1] = MOVE_UP;
+              //TODO these two should oscillate or randomize
+              tempArray[2] = MOVE_DOWN;
+              tempArray[3] = MOVE_LEFT;
+            }
+          }
+          else {
+            if(newX - enemies[temp5].x > newY - enemies[temp5].y) {
+              tempArray[0] = MOVE_DOWN;
+              tempArray[1] = MOVE_RIGHT;
+              //TODO these two should oscillate or randomize
+              tempArray[2] = MOVE_UP;
+              tempArray[3] = MOVE_LEFT;
+            }
+            else {
+              tempArray[0] = MOVE_RIGHT;
+              tempArray[1] = MOVE_DOWN;
+              //TODO these two should oscillate or randomize
+              tempArray[2] = MOVE_UP;
+              tempArray[3] = MOVE_LEFT;
+            }
           }
         }
       }
 
       for(temp1 = 0 ; temp1 < 4 ; temp1++) {
-        if(enemies[temp5].isMoving == 0) {
-          //Down
+        if(enemies[temp5].isMoving == MOVE_DOWN) {
           temp2 = enemies[temp5].x;
           temp3 = enemies[temp5].y + END_ENEMY_SPEED;
 
@@ -364,8 +456,7 @@ void updateEnemies(void) {
           temp4 = temp3 + 15;
           temp6 = temp2;
         }
-        else if(enemies[temp5].isMoving == 1) {
-          //left
+        else if(enemies[temp5].isMoving == MOVE_LEFT) {
           temp2 = enemies[temp5].x - END_ENEMY_SPEED;
           temp3 = enemies[temp5].y;
 
@@ -373,8 +464,7 @@ void updateEnemies(void) {
           temp4 = temp3;
           temp6 = temp2;
         }
-        else if(enemies[temp5].isMoving == 2) {
-          //up
+        else if(enemies[temp5].isMoving == MOVE_UP) {
           temp2 = enemies[temp5].x;
           temp3 = enemies[temp5].y - END_ENEMY_SPEED;
 
@@ -382,8 +472,7 @@ void updateEnemies(void) {
           temp4 = temp3;
           temp6 = temp2;
         }
-        else if(enemies[temp5].isMoving == 3) {
-          //right
+        else if(enemies[temp5].isMoving == MOVE_RIGHT) {
           temp2 = enemies[temp5].x + END_ENEMY_SPEED;
           temp3 = enemies[temp5].y;
 
@@ -400,7 +489,7 @@ void updateEnemies(void) {
 
         if(collision[temp4] == BLOCK_ID_SOLID || collision[temp4] == BLOCK_ID_DEATH_SOLID) {
           //Try another direction
-          enemies[temp5].isMoving = (enemies[temp5].isMoving + 1) % 4;
+          enemies[temp5].isMoving = tempArray[temp1];
         }
         else {
           //Move
@@ -643,6 +732,7 @@ void loadCollisionFromNametables(void)
       enemies[numEnemies].startX = 16*(tempInt % 16);
       enemies[numEnemies].startY = 16*(tempInt/16);
       enemies[numEnemies].isHoriz = 1;
+      enemies[numEnemies].isMoving = 0;
       enemies[numEnemies].x = enemies[numEnemies].startX;
       enemies[numEnemies].y = enemies[numEnemies].startY;
       numEnemies++;
@@ -651,6 +741,7 @@ void loadCollisionFromNametables(void)
       enemies[numEnemies].startX = 16*(tempInt % 16);
       enemies[numEnemies].startY = 16*(tempInt/16);
       enemies[numEnemies].isHoriz = 0;
+      enemies[numEnemies].isMoving = 0;
       enemies[numEnemies].x = enemies[numEnemies].startX;
       enemies[numEnemies].y = enemies[numEnemies].startY;
       numEnemies++;

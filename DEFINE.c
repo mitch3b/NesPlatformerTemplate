@@ -48,6 +48,8 @@ unsigned char temp3;
 unsigned char temp4;
 unsigned char temp5;
 unsigned char temp6;
+#define TEMP_ARRAY_MAX_SIZE 4
+unsigned char tempArray[TEMP_ARRAY_MAX_SIZE];
 char tempSigned;
 unsigned int tempInt;
 unsigned int tempInt2;
