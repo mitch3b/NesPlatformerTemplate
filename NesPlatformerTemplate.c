@@ -255,7 +255,7 @@ void main (void) {
 
         temp3 = temp3 + temp4;
         temp3 = 2*temp3;
-        paletteNum = 0xC0;
+        paletteNum = 0xC0; // 11000000
         paletteNum = paletteNum >> temp3;
         /*
         0 -> 11111100
@@ -772,7 +772,7 @@ void updateSprites(void) {
   temp1 = CANDLE_SPRITE_INDEX + 1;
 
   //TODO not sure why can't use candleCount here
-  for(temp2 = 0 ; temp2 < 2 ; temp2++) {
+  for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
     if((Frame_Count % 10) < 5) {
       SPRITES[temp1] = 0x10; //sprite
     }
