@@ -17,6 +17,8 @@
 #define B_BUTTON	0x40
 #define A_BUTTON	0x80
 
+#define NUM_TILES_X 16
+#define NUM_PIXELS_IN_TILE 16
 #define NUM_PIXELS_X_IN_PALETTE_BYTE 32
 #define NUM_PALETTES_ACROSS_IN_BYTE 8
 
@@ -45,6 +47,7 @@ unsigned char temp2;
 unsigned char temp3;
 unsigned char temp4;
 unsigned char temp5;
+unsigned char temp6;
 char tempSigned;
 unsigned int tempInt;
 unsigned int tempInt2;

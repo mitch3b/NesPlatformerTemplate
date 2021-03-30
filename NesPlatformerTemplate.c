@@ -12,6 +12,7 @@ candle_struct candles[MAX_CANDLES];
 unsigned char candlesLeft;
 
 #define ENEMY_SPEED 2
+#define END_ENEMY_SPEED 1
 typedef struct {
   unsigned char startX;
   unsigned char startY;
@@ -21,7 +22,7 @@ typedef struct {
   unsigned char isMoving;
 } crusher_enemy_struct;
 
-#define MAX_ENEMIES 5
+#define MAX_ENEMIES 10
 crusher_enemy_struct enemies[MAX_ENEMIES];
 unsigned char numEnemies;
 
@@ -35,6 +36,7 @@ unsigned char numEnemies;
 #define BLOCK_CANDLE   0x0A
 #define BLOCK_ENEMY_HORIZONTAL 0x0B
 #define BLOCK_ENEMY_VERTICAL    0x0C
+#define END_ENEMY 0x0D
 
 #pragma bss-name (push, "OAM")
 unsigned char SPRITES[256];
@@ -331,6 +333,83 @@ void drawCandles(void) {
 
 void updateEnemies(void) {
   for(temp5 = 0; temp5 < numEnemies ; temp5++){
+    if(enemies[temp5].isHoriz == 2 && candlesLeft == 0) {
+      //Try moving right at him
+      if(enemies[temp5].x == newX) {
+        if(enemies[temp5].y > newY) {
+          enemies[temp5].isMoving = 2;//up
+        }
+        else {
+          enemies[temp5].isMoving = 0;//down
+        }
+      }
+      else if(enemies[temp5].y == newY) {
+        if(enemies[temp5].x > newX) {
+          enemies[temp5].isMoving = 1;//left
+        }
+        else {
+          enemies[temp5].isMoving = 3;//right
+        }
+      }
+
+      for(temp1 = 0 ; temp1 < 4 ; temp1++) {
+        if(enemies[temp5].isMoving == 0) {
+          //Down
+          temp2 = enemies[temp5].x;
+          temp3 = enemies[temp5].y + END_ENEMY_SPEED;
+
+          //temp4 points to bottom left
+          temp4 = temp3 + 15;
+          temp6 = temp2;
+        }
+        else if(enemies[temp5].isMoving == 1) {
+          //left
+          temp2 = enemies[temp5].x - END_ENEMY_SPEED;
+          temp3 = enemies[temp5].y;
+
+          //temp4 points to top left
+          temp4 = temp3;
+          temp6 = temp2;
+        }
+        else if(enemies[temp5].isMoving == 2) {
+          //up
+          temp2 = enemies[temp5].x;
+          temp3 = enemies[temp5].y - END_ENEMY_SPEED;
+
+          //temp4 points to top left
+          temp4 = temp3;
+          temp6 = temp2;
+        }
+        else if(enemies[temp5].isMoving == 3) {
+          //right
+          temp2 = enemies[temp5].x + END_ENEMY_SPEED;
+          temp3 = enemies[temp5].y;
+
+          //temp4 points to top right
+          temp4 = temp3;
+          temp6 = temp2 + 15;
+        }
+
+        //temp4 is y, temp6 is x. but block in temp4
+        temp4 = temp4/NUM_PIXELS_IN_TILE;
+        temp4 = temp4*NUM_TILES_X;
+        temp6 = temp6/NUM_PIXELS_IN_TILE;
+        temp4 = temp4 + temp6;
+
+        if(collision[temp4] == BLOCK_ID_SOLID || collision[temp4] == BLOCK_ID_DEATH_SOLID) {
+          //Try another direction
+          enemies[temp5].isMoving = (enemies[temp5].isMoving + 1) % 4;
+        }
+        else {
+          //Move
+          enemies[temp5].x = temp2;
+          enemies[temp5].y = temp3;
+          break;
+        }
+      }
+      continue;
+    }
+
     if(enemies[temp5].isMoving > 0) {
       if(enemies[temp5].isHoriz == 0) {
         if(enemies[temp5].isMoving == 1) {
@@ -414,9 +493,16 @@ void drawEnemies(void) {
   temp1 = ENEMY_SPRITE_INDEX;
 
   for(temp5 = 0; temp5 < numEnemies ; temp5++){
-    temp2 = 0x21;
-    if(enemies[temp5].x == newX || enemies[temp5].y == newY) {
-      temp2 = 0x20;
+    if(enemies[numEnemies].isHoriz == 0 || enemies[numEnemies].isHoriz == 1) {
+      temp2 = 0x21;
+      if(enemies[temp5].x == newX || enemies[temp5].y == newY) {
+        temp2 = 0x20;
+      }
+      temp3 = 0x30;
+    }
+    else if(enemies[numEnemies].isHoriz == 2) {
+      temp2 = 0x21;
+      temp3 = 0x31;
     }
 
     SPRITES[temp1++] = enemies[temp5].y;
@@ -430,12 +516,12 @@ void drawEnemies(void) {
     SPRITES[temp1++] = enemies[temp5].x + 8;
 
     SPRITES[temp1++] = enemies[temp5].y + 8;
-    SPRITES[temp1++] = 0x30; //sprite
+    SPRITES[temp1++] = temp3; //sprite
     SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
     SPRITES[temp1++] = enemies[temp5].x;//candles[temp2].x; //X
 
     SPRITES[temp1++] = enemies[temp5].y + 8;
-    SPRITES[temp1++] = 0x30; //sprite
+    SPRITES[temp1++] = temp3; //sprite
     SPRITES[temp1++] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
     SPRITES[temp1++] = enemies[temp5].x + 8;//candles[temp2].x; //X
   }
@@ -553,6 +639,14 @@ void loadCollisionFromNametables(void)
       enemies[numEnemies].startX = 16*(tempInt % 16);
       enemies[numEnemies].startY = 16*(tempInt/16);
       enemies[numEnemies].isHoriz = 0;
+      enemies[numEnemies].x = enemies[numEnemies].startX;
+      enemies[numEnemies].y = enemies[numEnemies].startY;
+      numEnemies++;
+    }
+    else if(temp1 == END_ENEMY) {
+      enemies[numEnemies].startX = 16*(tempInt % 16);
+      enemies[numEnemies].startY = 16*(tempInt/16);
+      enemies[numEnemies].isHoriz = 2;
       enemies[numEnemies].x = enemies[numEnemies].startX;
       enemies[numEnemies].y = enemies[numEnemies].startY;
       numEnemies++;
