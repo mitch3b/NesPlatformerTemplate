@@ -25,14 +25,6 @@ typedef struct {
 crusher_enemy_struct enemies[MAX_ENEMIES];
 unsigned char numEnemies;
 
-// Physics
-#define GRAVITY 1
-#define JUMP_VELOCITY -8
-#define VELOCITY_FACTOR 4 //No decimals so only use 1/VELOCITY_FACTOR'th of the velocity
-#define MAX_JUMP_COUNT 10 //Number of frames you can hold jump and keep traveling up
-#define MAX_VELOCITY_X 1
-#define MAX_VELOCITY_WITH_B_X 2
-
 // Blocks
 #define BLOCK_ID_SOLID 0x01
 #define BLOCK_ID_OPEN  0x02
@@ -79,7 +71,7 @@ unsigned char prevPalletteToUpdate3;
 #define MAIN_CHAR_DEAD 3
 
 #define WALKING_SPEED 1     // Num steps per frame
-#define WALKING_NUM_STEPS 8 //
+#define WALKING_NUM_STEPS 16 //
 
 unsigned char startX;
 unsigned char startY;
