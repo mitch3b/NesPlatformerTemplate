@@ -2,11 +2,12 @@
 #include "Graphics/levelMedium.h"
 #include "Graphics/level1.h"
 #include "Graphics/level2.h"
+#include "Graphics/level3.h"
 #include "Graphics/Colors.h"
 
-#define NUM_LEVELS 4
+#define NUM_LEVELS 5
 
-const unsigned char* LEVELS[] = {levelEasy, levelMedium, level1, level2};
+const unsigned char* LEVELS[] = {levelEasy, levelMedium, level1, level2, level3};
 
 const unsigned char PALETTE[]={
   // Top is background

@@ -5,6 +5,7 @@
 *.s
 *.cdl
 *.nl
+*.rle
 vars.txt
 !asm4c.s
 !reset.s

@@ -96,7 +96,7 @@ void main (void) {
   allOff(); // turn off screen
 	song = 0;
   gameState = GAME_STATE_LOADING;
-  levelNum = 1;
+  levelNum = 4;
   startX = 1;
   startY = 0;
   isHidden = 0;
