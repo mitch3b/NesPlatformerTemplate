@@ -826,14 +826,20 @@ void putCharInBackgroundVars(void) {
 }
 
 void checkEnemyCollision(void) {
- for(temp2 = 0 ; temp2 < numEnemies ; temp2++) {
-   if(newY <= enemies[temp2].y + CHARACTER_HEIGHT && newY + CHARACTER_HEIGHT >= enemies[temp2].y &&
-      newX <= enemies[temp2].x + CHARACTER_WIDTH && newX + CHARACTER_WIDTH >= enemies[temp2].x) {
+  // Only do this math once. Forces enemies to be the same size
+  temp1 = newY + CHARACTER_HEIGHT;
+  temp3 = newX + CHARACTER_WIDTH;
+  temp4 = newY - CHARACTER_HEIGHT;
+  temp5 = newX - CHARACTER_WIDTH;
+
+  for(temp2 = 0 ; temp2 < numEnemies ; temp2++) {
+   if(temp4 <= enemies[temp2].y && temp1 >= enemies[temp2].y &&
+      temp5 <= enemies[temp2].x && temp3 >= enemies[temp2].x) {
 
       mainCharState = MAIN_CHAR_DYING;
       timer = DEAD_FOR_THIS_MANY_FRAMES;
    }
- }
+  }
 }
 
 void checkCandleCollision(void) {
@@ -844,7 +850,7 @@ void checkCandleCollision(void) {
        candles[temp2].picked_up = 1;
        candlesLeft--;
 
-       temp1 = temp2*4 + CANDLE_SPRITE_INDEX;
+       temp1 = (temp2 << 2) + CANDLE_SPRITE_INDEX;
        SPRITES[temp1] = 0x00;
        SPRITES[temp1 + 3] = 0x00;
      }
