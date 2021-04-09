@@ -1,14 +1,14 @@
 #include "DEFINE.c"
 #include "LevelData.c"
 
+#define MAX_CANDLES 4
 typedef struct {
-  unsigned char x;
-  unsigned char y;
-  unsigned char picked_up;
+  unsigned char x[MAX_CANDLES];
+  unsigned char y[MAX_CANDLES];
+  unsigned char picked_up[MAX_CANDLES];
 } candle_struct;
 
-#define MAX_CANDLES 4
-candle_struct candles[MAX_CANDLES];
+candle_struct candles;
 unsigned char candlesLeft;
 
 #define ENEMY_SPEED 2
@@ -20,17 +20,18 @@ unsigned char candlesLeft;
 #define END_ENEMY_SPEED 1
 #define END_ENEMY_SPEED 1
 #define END_ENEMY_SPEED 1
-typedef struct {
-  unsigned char startX;
-  unsigned char startY;
-  unsigned char isHoriz;
-  unsigned char x;
-  unsigned char y;
-  unsigned char isMoving;
-} crusher_enemy_struct;
 
 #define MAX_ENEMIES 10
-crusher_enemy_struct enemies[MAX_ENEMIES];
+typedef struct {
+  unsigned char startX[MAX_ENEMIES];
+  unsigned char startY[MAX_ENEMIES];
+  unsigned char isHoriz[MAX_ENEMIES];
+  unsigned char x[MAX_ENEMIES];
+  unsigned char y[MAX_ENEMIES];
+  unsigned char isMoving[MAX_ENEMIES];
+} crusher_enemy_struct;
+
+crusher_enemy_struct enemies;
 unsigned char numEnemies;
 
 // Blocks
@@ -136,9 +137,9 @@ void main (void) {
       candlesLeft = candleCount;
       drawCandles();
 
-      for(temp1 = 0 ; temp1 < numEnemies ; temp1++) {
-        enemies[temp1].x = enemies[temp1].startX;
-        enemies[temp1].y = enemies[temp1].startY;
+      for(temp1 = 0 ; temp1 < numEnemies ; ++temp1) {
+        enemies.x[temp1] = enemies.startX[temp1];
+        enemies.y[temp1] = enemies.startY[temp1];
       }
 
       drawEnemies();
@@ -296,10 +297,10 @@ void main (void) {
         updateSprites(); //Might be a cleaner way to reset the level
         isHidden = 1;
 
-        for(temp1 = 0 ; temp1 < numEnemies ; temp1++) {
-          enemies[temp1].x = enemies[temp1].startX;
-          enemies[temp1].y = enemies[temp1].startY;
-          enemies[temp1].isMoving = 0;
+        for(temp1 = 0 ; temp1 < numEnemies ; ++temp1) {
+          enemies.x[temp1] = enemies.startX[temp1];
+          enemies.y[temp1] = enemies.startY[temp1];
+          enemies.isMoving[temp1] = 0;
         }
 
         drawEnemies();
@@ -307,8 +308,8 @@ void main (void) {
         // Reload candle (TODO better way to do this)
         candlesLeft = candleCount;
 
-        for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
-          candles[temp2].picked_up = 0;
+        for(temp2 = 0 ; temp2 < candleCount ; ++temp2) {
+          candles.picked_up[temp2] = 0;
         }
 
         drawCandles();
@@ -330,21 +331,21 @@ void main (void) {
 
 void drawCandles(void) {
   temp1 = CANDLE_SPRITE_INDEX;
-  for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
-    SPRITES[temp1++] = candles[temp2].y + 4;//candles[temp2].y; //Y
+  for(temp2 = 0 ; temp2 < candleCount ; ++temp2) {
+    SPRITES[temp1++] = candles.y[temp2] + 4;
     SPRITES[temp1++] = 0x10; //sprite
     SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
-    SPRITES[temp1++] = candles[temp2].x + 4;//candles[temp2].x; //X
+    SPRITES[temp1++] = candles.x[temp2] + 4;
   }
 }
 
 void updateEnemies(void) {
-  for(temp5 = 0; temp5 < numEnemies ; temp5++){
-    if(enemies[temp5].isHoriz == 2 && candlesLeft == 0) {
+  for(temp5 = 0; temp5 < numEnemies ; ++temp5){
+    if(enemies.isHoriz[temp5] == 2 && candlesLeft == 0) {
       //Try moving right at him
-      if(enemies[temp5].x % NUM_PIXELS_IN_TILE == 0 && enemies[temp5].y % NUM_PIXELS_IN_TILE == 0) {
-        if(enemies[temp5].x == newX) {
-          if(enemies[temp5].y > newY) {
+      if(enemies.x[temp5] % NUM_PIXELS_IN_TILE == 0 && enemies.y[temp5] % NUM_PIXELS_IN_TILE == 0) {
+        if(enemies.x[temp5] == newX) {
+          if(enemies.y[temp5] > newY) {
             tempArray[0] = MOVE_UP;
             //TODO these two should oscillate or randomize
             tempArray[1] = MOVE_LEFT;
@@ -359,8 +360,8 @@ void updateEnemies(void) {
             tempArray[3] = MOVE_UP;
           }
         }
-        else if(enemies[temp5].y == newY) {
-          if(enemies[temp5].x > newX) {
+        else if(enemies.y[temp5] == newY) {
+          if(enemies.x[temp5] > newX) {
             tempArray[0] = MOVE_LEFT;
             //TODO these two should oscillate or randomize
             tempArray[1] = MOVE_DOWN;
@@ -377,11 +378,11 @@ void updateEnemies(void) {
         }
         else {
           // Move to whichever direction is furthest but direct
-          temp2 = enemies[temp5].x > newX;
-          temp3 = enemies[temp5].y > newY;
+          temp2 = enemies.x[temp5] > newX;
+          temp3 = enemies.y[temp5] > newY;
 
           if(temp2 && temp3) {
-            if(enemies[temp5].x - newX > enemies[temp5].y - newY) {
+            if(enemies.x[temp5] - newX > enemies.y[temp5] - newY) {
               tempArray[0] = MOVE_UP;
               tempArray[1] = MOVE_LEFT;
               //TODO these two should oscillate or randomize
@@ -397,7 +398,7 @@ void updateEnemies(void) {
             }
           }
           else if(temp2 && !temp3) {
-            if(enemies[temp5].x - newX > newY - enemies[temp5].y) {
+            if(enemies.x[temp5] - newX > newY - enemies.y[temp5]) {
               tempArray[0] = MOVE_DOWN;
               tempArray[1] = MOVE_LEFT;
               //TODO these two should oscillate or randomize
@@ -413,7 +414,7 @@ void updateEnemies(void) {
             }
           }
           else if(!temp2 && temp3) {
-            if(newX - enemies[temp5].x > enemies[temp5].y - newY) {
+            if(newX - enemies.x[temp5] > enemies.y[temp5] - newY) {
               tempArray[0] = MOVE_UP;
               tempArray[1] = MOVE_RIGHT;
               //TODO these two should oscillate or randomize
@@ -429,7 +430,7 @@ void updateEnemies(void) {
             }
           }
           else {
-            if(newX - enemies[temp5].x > newY - enemies[temp5].y) {
+            if(newX - enemies.x[temp5] > newY - enemies.y[temp5]) {
               tempArray[0] = MOVE_DOWN;
               tempArray[1] = MOVE_RIGHT;
               //TODO these two should oscillate or randomize
@@ -447,34 +448,34 @@ void updateEnemies(void) {
         }
       }
 
-      for(temp1 = 0 ; temp1 < 4 ; temp1++) {
-        if(enemies[temp5].isMoving == MOVE_DOWN) {
-          temp2 = enemies[temp5].x;
-          temp3 = enemies[temp5].y + END_ENEMY_SPEED;
+      for(temp1 = 0 ; temp1 < 4 ; ++temp1) {
+        if(enemies.isMoving[temp5] == MOVE_DOWN) {
+          temp2 = enemies.x[temp5];
+          temp3 = enemies.y[temp5] + END_ENEMY_SPEED;
 
           //temp4 points to bottom left
           temp4 = temp3 + 15;
           temp6 = temp2;
         }
-        else if(enemies[temp5].isMoving == MOVE_LEFT) {
-          temp2 = enemies[temp5].x - END_ENEMY_SPEED;
-          temp3 = enemies[temp5].y;
+        else if(enemies.isMoving[temp5] == MOVE_LEFT) {
+          temp2 = enemies.x[temp5] - END_ENEMY_SPEED;
+          temp3 = enemies.y[temp5];
 
           //temp4 points to top left
           temp4 = temp3;
           temp6 = temp2;
         }
-        else if(enemies[temp5].isMoving == MOVE_UP) {
-          temp2 = enemies[temp5].x;
-          temp3 = enemies[temp5].y - END_ENEMY_SPEED;
+        else if(enemies.isMoving[temp5] == MOVE_UP) {
+          temp2 = enemies.x[temp5];
+          temp3 = enemies.y[temp5] - END_ENEMY_SPEED;
 
           //temp4 points to top left
           temp4 = temp3;
           temp6 = temp2;
         }
-        else if(enemies[temp5].isMoving == MOVE_RIGHT) {
-          temp2 = enemies[temp5].x + END_ENEMY_SPEED;
-          temp3 = enemies[temp5].y;
+        else if(enemies.isMoving[temp5] == MOVE_RIGHT) {
+          temp2 = enemies.x[temp5] + END_ENEMY_SPEED;
+          temp3 = enemies.y[temp5];
 
           //temp4 points to top right
           temp4 = temp3;
@@ -489,90 +490,90 @@ void updateEnemies(void) {
 
         if(collision[temp4] == BLOCK_ID_SOLID || collision[temp4] == BLOCK_ID_DEATH_SOLID) {
           //Try another direction
-          enemies[temp5].isMoving = tempArray[temp1];
+          enemies.isMoving[temp5] = tempArray[temp1];
         }
         else {
           //Move
-          enemies[temp5].x = temp2;
-          enemies[temp5].y = temp3;
+          enemies.x[temp5] = temp2;
+          enemies.y[temp5] = temp3;
           break;
         }
       }
       continue;
     }
 
-    if(enemies[temp5].isMoving > 0) {
-      if(enemies[temp5].isHoriz == 0) {
-        if(enemies[temp5].isMoving == 1) {
+    if(enemies.isMoving[temp5] > 0) {
+      if(enemies.isHoriz[temp5] == 0) {
+        if(enemies.isMoving[temp5] == 1) {
           // Down
-          temp1 = enemies[temp5].y + ENEMY_SPEED;
+          temp1 = enemies.y[temp5] + ENEMY_SPEED;
 
           //temp3 points to bottom left
-          temp4 = enemies[temp5].x;
+          temp4 = enemies.x[temp5];
           temp4 = temp4 >> 4;
           temp2 = (temp1 + 15) >> 4;
           temp3 = temp2*16 + temp4;
         }
         else {
           // up
-          temp1 = enemies[temp5].y - ENEMY_SPEED;
+          temp1 = enemies.y[temp5] - ENEMY_SPEED;
 
           //temp3 points to top left
-          temp4 = enemies[temp5].x >> 4;
+          temp4 = enemies.x[temp5] >> 4;
           temp2 = temp1 >> 4;
           temp3 = temp2*16 + temp4;
         }
       }
-      else if(enemies[temp5].isHoriz == 1) {
-        if(enemies[temp5].isMoving == 1) {
-          temp1 = enemies[temp5].x + ENEMY_SPEED;
+      else if(enemies.isHoriz[temp5] == 1) {
+        if(enemies.isMoving[temp5] == 1) {
+          temp1 = enemies.x[temp5] + ENEMY_SPEED;
 
           //temp3 points to top right
           temp4 = temp1 + 15;
           temp4 = temp4 >> 4;
-          temp2 = enemies[temp5].y >> 4;
+          temp2 = enemies.y[temp5] >> 4;
           temp3 = temp2*16 + temp4;
         }
         else {
-          temp1 = enemies[temp5].x - ENEMY_SPEED;
+          temp1 = enemies.x[temp5] - ENEMY_SPEED;
 
           //temp3 points to top left
           temp4 = temp1 >> 4;
-          temp2 = enemies[temp5].y >> 4;
+          temp2 = enemies.y[temp5] >> 4;
           temp3 = temp2*16 + temp4;
         }
       }
 
       if(collision[temp3] == BLOCK_ID_SOLID || collision[temp3] == BLOCK_ID_DEATH_SOLID) {
-        enemies[temp5].isMoving = 0;
+        enemies.isMoving[temp5] = 0;
       }
       else {
-        if(enemies[temp5].isHoriz == 0) {
-          enemies[temp5].y = temp1;
+        if(enemies.isHoriz[temp5] == 0) {
+          enemies.y[temp5] = temp1;
         }
-        else if(enemies[temp5].isHoriz == 1) {
-          enemies[temp5].x = temp1;
+        else if(enemies.isHoriz[temp5] == 1) {
+          enemies.x[temp5] = temp1;
         }
       }
     }
     else {
-      if(enemies[temp5].isHoriz == 1) {
-        if(newY == enemies[temp5].y) {
-          if(newX > enemies[temp5].x){
-            enemies[temp5].isMoving = 1;
+      if(enemies.isHoriz[temp5] == 1) {
+        if(newY == enemies.y[temp5]) {
+          if(newX > enemies.x[temp5]){
+            enemies.isMoving[temp5] = 1;
           }
           else {
-            enemies[temp5].isMoving = 2;
+            enemies.isMoving[temp5] = 2;
           }
         }
       }
-      else if(enemies[temp5].isHoriz == 0) {
-        if(newX == enemies[temp5].x) {
-          if(newY > enemies[temp5].y){
-            enemies[temp5].isMoving = 1;
+      else if(enemies.isHoriz[temp5] == 0) {
+        if(newX == enemies.x[temp5]) {
+          if(newY > enemies.y[temp5]){
+            enemies.isMoving[temp5] = 1;
           }
           else {
-            enemies[temp5].isMoving = 2;
+            enemies.isMoving[temp5] = 2;
           }
         }
       }
@@ -583,22 +584,22 @@ void updateEnemies(void) {
 void drawEnemies(void) {
   temp1 = ENEMY_SPRITE_INDEX;
 
-  for(temp5 = 0; temp5 < numEnemies ; temp5++){
-    if(enemies[temp5].isHoriz == 0) {
+  for(temp5 = 0; temp5 < numEnemies ; ++temp5){
+    if(enemies.isHoriz[temp5] == 0) {
       temp2 = 0x21;
-      if(enemies[temp5].x == newX || enemies[temp5].y == newY || enemies[temp5].isMoving > 0) {
+      if(enemies.x[temp5] == newX || enemies.y[temp5] == newY || enemies.isMoving[temp5] > 0) {
         temp2 = 0x20;
       }
       temp3 = 0x30;
     }
-    else if(enemies[temp5].isHoriz == 1) {
+    else if(enemies.isHoriz[temp5] == 1) {
       temp2 = 0x21;
-      if(enemies[temp5].x == newX || enemies[temp5].y == newY || enemies[temp5].isMoving > 0 ) {
+      if(enemies.x[temp5] == newX || enemies.y[temp5] == newY || enemies.isMoving[temp5] > 0 ) {
         temp2 = 0x31;
       }
       temp3 = 0x30;
     }
-    else if(enemies[temp5].isHoriz == 2) {
+    else if(enemies.isHoriz[temp5] == 2) {
       temp2 = 0x22;
       if(candlesLeft == 0) {
         temp2 = 0x23;
@@ -606,25 +607,25 @@ void drawEnemies(void) {
       temp3 = 0x32;
     }
 
-    SPRITES[temp1++] = enemies[temp5].y;
+    SPRITES[temp1++] = enemies.y[temp5];
     SPRITES[temp1++] = temp2; //sprite
     SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
-    SPRITES[temp1++] = enemies[temp5].x;
+    SPRITES[temp1++] = enemies.x[temp5];
 
-    SPRITES[temp1++] = enemies[temp5].y;
+    SPRITES[temp1++] = enemies.y[temp5];
     SPRITES[temp1++] = temp2; //sprite
     SPRITES[temp1++] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
-    SPRITES[temp1++] = enemies[temp5].x + 8;
+    SPRITES[temp1++] = enemies.x[temp5] + 8;
 
-    SPRITES[temp1++] = enemies[temp5].y + 8;
+    SPRITES[temp1++] = enemies.y[temp5] + 8;
     SPRITES[temp1++] = temp3; //sprite
     SPRITES[temp1++] = 0x02; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
-    SPRITES[temp1++] = enemies[temp5].x;//candles[temp2].x; //X
+    SPRITES[temp1++] = enemies.x[temp5];
 
-    SPRITES[temp1++] = enemies[temp5].y + 8;
+    SPRITES[temp1++] = enemies.y[temp5] + 8;
     SPRITES[temp1++] = temp3; //sprite
     SPRITES[temp1++] = 0x42; //attribute (flip vert, flip horiz, priority, 3x unused, 2x palette)
-    SPRITES[temp1++] = enemies[temp5].x + 8;//candles[temp2].x; //X
+    SPRITES[temp1++] = enemies.x[temp5] + 8;
   }
 }
 
@@ -711,7 +712,7 @@ void loadCollisionFromNametables(void)
   candleCount = 0;
   numEnemies = 0;
 
-  for(tempInt = 0 ; tempInt < 240 ; tempInt++) {
+  for(tempInt = 0 ; tempInt < 240 ; ++tempInt) {
     //Top left of 2x2 square
     temp1 = *((unsigned char*)0x2007);
 
@@ -723,36 +724,36 @@ void loadCollisionFromNametables(void)
       startY = 16*(tempInt/16);
     }
     else if(temp1 == BLOCK_CANDLE) {
-      candles[candleCount].x = 16*(tempInt % 16);
-      candles[candleCount].y = 16*(tempInt/16);
-      candles[candleCount].picked_up = 0;
-      candleCount++;
+      candles.x[candleCount] = 16*(tempInt % 16);
+      candles.y[candleCount] = 16*(tempInt/16);
+      candles.picked_up[candleCount] = 0;
+      ++candleCount;
     }
     else if(temp1 == BLOCK_ENEMY_HORIZONTAL) {
-      enemies[numEnemies].startX = 16*(tempInt % 16);
-      enemies[numEnemies].startY = 16*(tempInt/16);
-      enemies[numEnemies].isHoriz = 1;
-      enemies[numEnemies].isMoving = 0;
-      enemies[numEnemies].x = enemies[numEnemies].startX;
-      enemies[numEnemies].y = enemies[numEnemies].startY;
-      numEnemies++;
+      enemies.startX[numEnemies] = 16*(tempInt % 16);
+      enemies.startY[numEnemies] = 16*(tempInt/16);
+      enemies.isHoriz[numEnemies] = 1;
+      enemies.isMoving[numEnemies] = 0;
+      enemies.x[numEnemies] = enemies.startX[numEnemies];
+      enemies.y[numEnemies] = enemies.startY[numEnemies];
+      ++numEnemies;
     }
     else if(temp1 == BLOCK_ENEMY_VERTICAL) {
-      enemies[numEnemies].startX = 16*(tempInt % 16);
-      enemies[numEnemies].startY = 16*(tempInt/16);
-      enemies[numEnemies].isHoriz = 0;
-      enemies[numEnemies].isMoving = 0;
-      enemies[numEnemies].x = enemies[numEnemies].startX;
-      enemies[numEnemies].y = enemies[numEnemies].startY;
-      numEnemies++;
+      enemies.startX[numEnemies] = 16*(tempInt % 16);
+      enemies.startY[numEnemies] = 16*(tempInt/16);
+      enemies.isHoriz[numEnemies] = 0;
+      enemies.isMoving[numEnemies] = 0;
+      enemies.x[numEnemies] = enemies.startX[numEnemies];
+      enemies.y[numEnemies] = enemies.startY[numEnemies];
+      ++numEnemies;
     }
     else if(temp1 == END_ENEMY) {
-      enemies[numEnemies].startX = 16*(tempInt % 16);
-      enemies[numEnemies].startY = 16*(tempInt/16);
-      enemies[numEnemies].isHoriz = 2;
-      enemies[numEnemies].x = enemies[numEnemies].startX;
-      enemies[numEnemies].y = enemies[numEnemies].startY;
-      numEnemies++;
+      enemies.startX[numEnemies] = 16*(tempInt % 16);
+      enemies.startY[numEnemies] = 16*(tempInt/16);
+      enemies.isHoriz[numEnemies] = 2;
+      enemies.x[numEnemies] = enemies.startX[numEnemies];
+      enemies.y[numEnemies] = enemies.startY[numEnemies];
+      ++numEnemies;
     }
 
     //Burn the right side of 2x2
@@ -760,7 +761,7 @@ void loadCollisionFromNametables(void)
 
     if((tempInt % 16) == 15) {
       //skip every other row
-      for(temp2 = 0; temp2 < 32 ; temp2++) {
+      for(temp2 = 0; temp2 < 32 ; ++temp2) {
         temp1 = *((unsigned char*)0x2007);
       }
     }
@@ -832,9 +833,9 @@ void checkEnemyCollision(void) {
   temp4 = newY - CHARACTER_HEIGHT;
   temp5 = newX - CHARACTER_WIDTH;
 
-  for(temp2 = 0 ; temp2 < numEnemies ; temp2++) {
-   if(temp4 <= enemies[temp2].y && temp1 >= enemies[temp2].y &&
-      temp5 <= enemies[temp2].x && temp3 >= enemies[temp2].x) {
+  for(temp2 = 0 ; temp2 < numEnemies ; ++temp2) {
+   if(temp4 <= enemies.y[temp2] && temp1 >= enemies.y[temp2] &&
+      temp5 <= enemies.x[temp2] && temp3 >= enemies.x[temp2]) {
 
       mainCharState = MAIN_CHAR_DYING;
       timer = DEAD_FOR_THIS_MANY_FRAMES;
@@ -843,11 +844,11 @@ void checkEnemyCollision(void) {
 }
 
 void checkCandleCollision(void) {
- for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
-   if(candles[temp2].picked_up == 0) {
-     if(newY == candles[temp2].y && newX == candles[temp2].x) {
+ for(temp2 = 0 ; temp2 < candleCount ; ++temp2) {
+   if(candles.picked_up[temp2] == 0) {
+     if(newY == candles.y[temp2] && newX == candles.x[temp2]) {
        // Hide candle
-       candles[temp2].picked_up = 1;
+       candles.picked_up[temp2] = 1;
        candlesLeft--;
 
        temp1 = (temp2 << 2) + CANDLE_SPRITE_INDEX;
@@ -980,7 +981,7 @@ void updateSprites(void) {
   temp1 = CANDLE_SPRITE_INDEX + 1;
 
   //TODO not sure why can't use candleCount here
-  for(temp2 = 0 ; temp2 < candleCount ; temp2++) {
+  for(temp2 = 0 ; temp2 < candleCount ; ++temp2) {
     if((Frame_Count % 10) < 5) {
       SPRITES[temp1] = 0x10; //sprite
     }
