@@ -220,15 +220,15 @@ void main (void) {
           temp2 = temp2 - 1;
         }
 
-        temp3 = temp1/NUM_PIXELS_X_IN_PALETTE_BYTE;
-        paletteToUpdate = temp2/NUM_PIXELS_X_IN_PALETTE_BYTE;
-        paletteToUpdate = paletteToUpdate*NUM_PALETTES_ACROSS_IN_BYTE;
+        temp3 = temp1 >> NUM_PIXELS_X_IN_PALETTE_BYTE_SHIFT;
+        paletteToUpdate = temp2 >> NUM_PIXELS_X_IN_PALETTE_BYTE_SHIFT;
+        paletteToUpdate = paletteToUpdate << NUM_PALETTES_ACROSS_IN_BYTE_SHIFT;
         paletteToUpdate = paletteToUpdate + temp3;
         temp3 = temp1 % NUM_PIXELS_X_IN_PALETTE_BYTE;
-        temp3 = temp3/16;
+        temp3 = temp3 >> 4;
 
         temp4 = temp2 % NUM_PIXELS_X_IN_PALETTE_BYTE;
-        temp4 = temp4/16;
+        temp4 = temp4 >> 4;
         temp4 = temp4*2;
 
         if(temp3 == 0) {
@@ -379,7 +379,7 @@ void updateEnemies(void) {
           // Move to whichever direction is furthest but direct
           temp2 = enemies[temp5].x > newX;
           temp3 = enemies[temp5].y > newY;
-          
+
           if(temp2 && temp3) {
             if(enemies[temp5].x - newX > enemies[temp5].y - newY) {
               tempArray[0] = MOVE_UP;
@@ -509,8 +509,8 @@ void updateEnemies(void) {
 
           //temp3 points to bottom left
           temp4 = enemies[temp5].x;
-          temp4 = temp4/16;
-          temp2 = (temp1 + 15)/16;
+          temp4 = temp4 >> 4;
+          temp2 = (temp1 + 15) >> 4;
           temp3 = temp2*16 + temp4;
         }
         else {
@@ -518,8 +518,8 @@ void updateEnemies(void) {
           temp1 = enemies[temp5].y - ENEMY_SPEED;
 
           //temp3 points to top left
-          temp4 = enemies[temp5].x/16;
-          temp2 = temp1/16;
+          temp4 = enemies[temp5].x >> 4;
+          temp2 = temp1 >> 4;
           temp3 = temp2*16 + temp4;
         }
       }
@@ -529,16 +529,16 @@ void updateEnemies(void) {
 
           //temp3 points to top right
           temp4 = temp1 + 15;
-          temp4 = temp4/16;
-          temp2 = enemies[temp5].y/16;
+          temp4 = temp4 >> 4;
+          temp2 = enemies[temp5].y >> 4;
           temp3 = temp2*16 + temp4;
         }
         else {
           temp1 = enemies[temp5].x - ENEMY_SPEED;
 
           //temp3 points to top left
-          temp4 = temp1/16;
-          temp2 = enemies[temp5].y/16;
+          temp4 = temp1 >> 4;
+          temp2 = enemies[temp5].y >> 4;
           temp3 = temp2*16 + temp4;
         }
       }
@@ -858,46 +858,46 @@ void checkBackgroundCollision(void) {
 
     if(walkingDirection == LEFT) {
       //temp3 points top left
-      temp1 = newX/16;
-      temp2 = newY/16;
+      temp1 = newX >> 4;
+      temp2 = newY >> 4;
       temp3 = temp2*16 + temp1;
 
       //temp4 points bottom left
-      temp1 = newX/16;
-      temp2 = (newY + 15)/16;
+      temp1 = newX >> 4;
+      temp2 = (newY + 15) >> 4;
       temp4 = temp2*16 + temp1;
     }
     else if(walkingDirection == RIGHT) {
       //temp3 points top right
-      temp1 = (newX + 15)/16;
-      temp2 = newY/16;
+      temp1 = (newX + 15) >> 4;
+      temp2 = newY >> 4;
       temp3 = temp2*16 + temp1;
 
       //temp4 points bottom right
-      temp1 = (newX + 15)/16;
-      temp2 = (newY + 15)/16;
+      temp1 = (newX + 15) >> 4;
+      temp2 = (newY + 15) >> 4;
       temp4 = temp2*16 + temp1;
     }
     if(walkingDirection == UP) {
       //temp3 points top left
-      temp1 = newX/16;
-      temp2 = newY/16;
+      temp1 = newX >> 4;
+      temp2 = newY >> 4;
       temp3 = temp2*16 + temp1;
 
       //temp4 points top right
-      temp1 = (newX + 15)/16;
-      temp2 = newY/16;
+      temp1 = (newX + 15) >> 4;
+      temp2 = newY >> 4;
       temp4 = temp2*16 + temp1;
     }
     else if(walkingDirection == DOWN) {
       //temp3 points bottom left
-      temp1 = newX/16;
-      temp2 = (newY + 15)/16;
+      temp1 = newX >> 4;
+      temp2 = (newY + 15) >> 4;
       temp3 = temp2*16 + temp1;
 
       //temp4 points bottom right
-      temp1 = (newX + 15)/16;
-      temp2 = (newY + 15)/16;
+      temp1 = (newX + 15) >> 4;
+      temp2 = (newY + 15) >> 4;
       temp4 = temp2*16 + temp1;
     }
 
@@ -918,7 +918,7 @@ void checkBackgroundCollision(void) {
             collision[temp4] == BLOCK_ID_END) {
         temp1 = BLOCK_ID_END;
     }
-    else if(candleCount > 0 && 
+    else if(candleCount > 0 &&
              (collision[temp3] == END_ENEMY ||
               collision[temp4] == END_ENEMY)) {
       temp1 = BLOCK_ID_DEATH;

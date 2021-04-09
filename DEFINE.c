@@ -20,7 +20,9 @@
 #define NUM_TILES_X 16
 #define NUM_PIXELS_IN_TILE 16
 #define NUM_PIXELS_X_IN_PALETTE_BYTE 32
+#define NUM_PIXELS_X_IN_PALETTE_BYTE_SHIFT 5
 #define NUM_PALETTES_ACROSS_IN_BYTE 8
+#define NUM_PALETTES_ACROSS_IN_BYTE_SHIFT 3
 
 // Globals
 // our startup code initialized all values to zero
